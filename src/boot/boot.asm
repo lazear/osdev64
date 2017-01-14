@@ -296,7 +296,7 @@ dw 0xAA55 					; Last 2 bytes = Boot sector identifyer
 ;==============================================================================
 [BITS 64]
 
-%include "elf64.asm"
+%include "boot/elf64.asm"
 
 long_mode:
 	mov rax, 0xFFFF80000000A000

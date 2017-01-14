@@ -114,8 +114,6 @@ void trap(struct registers* r)
 		char buf[100];
 		snprintf(buf, 100, "CPU exception: %s\n", exceptions[r->int_no]);
 		vga_puts(buf);
-		snprintf(buf, 100, "RAX %#x RBX %#x\nRCX %#x RDX %#x\n", r->rax, r->rbx, r->rcx, r->rdx);
-		vga_puts(buf);
 
 		halt_catch_fire();
 	}
@@ -135,7 +133,7 @@ void main(void)
 	uint8_t memlen = *(uint8_t*) 0x6FF0 / sizeof(struct memory_map);
 	struct memory_map* mmap = (struct memory_map*) 0x7000;
 	struct memory_map* mmax = mmap + memlen;
-	printf("Welcome to x86_64 Kernel!\nExaming memory map table...\n");
+	printf("Control transferred to x86_64 kernel\n");
 
 
 	uint64_t phys_mem_detected = 0;
@@ -148,12 +146,8 @@ void main(void)
 
 	printf("%dM total physical memory detected\n", phys_mem_detected / 0x100000);
 
-	printf("TSS %x\n", system_tss.ist[0]);
-	//printf("EFER: %x\n", readmsr(0xC0000080));
-	asm volatile("sti");
 
-	uint64_t* x = 0x40000000;
-	*x = 10;
+	asm volatile("sti");
 
 	pic_enable(32);
 	for(;;);
