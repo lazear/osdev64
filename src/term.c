@@ -29,14 +29,16 @@ Implementation of text-mode vga driver for crunchy
 #include <stdint.h>
 #include <stddef.h>
 #include <stdatomic.h>
-#include "x86_64.h"
+
+#include <common.h>
+#include <stdio.h>
 
 static struct vga_coord {
-	char* vga;
+	uint8_t* vga;
 	uint16_t attrib;
 	uint16_t x, y;
 } __tty_info = {
-	.vga = 0xFFFF8000000b8000,
+	.vga = (uint8_t*) 0xFFFF8000000b8000,
 	.attrib = 0x7,
 	.x = 0,
 	.y = 0,
@@ -44,7 +46,7 @@ static struct vga_coord {
 
 
 void vga_clear() {
-	char* vga_address = __tty_info.vga;
+	uint8_t* vga_address = __tty_info.vga;
 
 	const long size = 80 * 25;
 	for (long i = 0; i < size; i++ ) { 
@@ -96,24 +98,18 @@ void vga_overwrite_color(int color, int start_x, int start_y, int end_x, int end
 
 /* kernel level putc, does not update CURRENT_POSITION */
 void vga_kputc(char c, int x, int y) {
-	char *vga_address = __tty_info.vga + (x + y * 160);
+	uint8_t *vga_address = __tty_info.vga + (x + y * 160);
 	*(uint16_t*)vga_address = c | (__tty_info.attrib << 8);
 }
 
 void vga_kputs(char* s, int x, int y) {
-	int i = 0;
-	while (*s != 0) {
-		vga_kputc(*s, x+=2, y);
-		s++;
-	}
+	while (*s != 0)
+		vga_kputc(*s++, x+=2, y);
 }
 
 void vga_puts(char* s) {
-	int i = 0;
-	while (*s != 0) {
-		vga_putc(*s);
-		*s++;
-	}
+	while (*s != 0) 
+		vga_putc(*s++);
 }
 
 /* Automatically update text position, used in vga_puts */

@@ -1,14 +1,43 @@
-;;; Kernel common library in x86_64 assembly
+; MIT License
+
+; Copyright (c) Michael Lazear, 2016 - 2017 
+
+; Permission is hereby granted, free of charge, to any person obtaining a copy
+; of this software and associated documentation files (the "Software"), to deal
+; in the Software without restriction, including without limitation the rights
+; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+; copies of the Software, and to permit persons to whom the Software is
+; furnished to do so, subject to the following conditions:
+
+; The above copyright notice and this permission notice shall be included in all
+; copies or substantial portions of the Software.
+
+; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+; SOFTWARE.
+
+; Common library in x86_64 assembly. Functions are defined in include/common.h
+; SysV x86_64 ABI:
+; First 6 parameters are passed in rdi, rsi, rdx, rcx, r8, and r9.
+; Additional parameters are pushed onto the stack
+; Callee must preserve rsp, rbp, rbx, r12-r15
+; Return value is in RDX:RAX
+
+; Memcpy/memset etc are unoptimized.
 
 [bits 64]
 
-global print
 global strlen
-global memset
-global memsetw
-global memcpy
 global strcpy
 global strncpy
+global memcpy
+global memset
+global memsetw
+
 global gdt_flush
 global writemsr 
 global readmsr 
@@ -16,6 +45,7 @@ global outb
 global inb 
 global halt_catch_fire
 
+;;; Disable interrupts, halt, and repeat.
 halt_catch_fire:
 	cli
 	hlt 
@@ -98,6 +128,7 @@ memset:
 	rep stosb
 	ret
 
+;;; memsetw(rdi = destination, rsi = fill, rdx = count)
 memsetw:
 	mov rax, rsi
 	mov rcx, rdx 
@@ -172,23 +203,3 @@ strlen:
 	.done:
 		mov rax, rcx
 		ret
-
-; print(destination, source)
-; returns current pointer to desination in rax
-print:
-	.loop:
-		; move byte at address DS:ESI into AL
-		lodsb
-		; test for NULL terminated string
-		or al, al 
-		jz .done
-		mov byte [rdi], al
-		add rdi, 2
-		jmp .loop
-	.done:
-		mov rax, rdi
-		ret
-
-
-
-

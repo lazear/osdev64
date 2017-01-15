@@ -30,7 +30,8 @@ Kernel level printf. Should be removed once userspace is up and running
 #include <stdarg.h>
 #include <limits.h>
 
-#include "x86_64.h"
+#include <stdio.h>
+#include <common.h>
 
 #define isdigit(c)		(c >= '0' && c <= '9')
 
@@ -39,8 +40,6 @@ Kernel level printf. Should be removed once userspace is up and running
 #define PAD 			4
 #define LONG			8
 #define NOTNUM			0x10
-
-
 
 int strrev(char* s)
 {
@@ -73,7 +72,8 @@ int ulltostr(size_t num, char* buffer, int base, int len)
 	return strrev(buffer);
 }
 
-int vsnprintf(char *str, size_t size, const char *format, va_list ap) {
+int vsnprintf(char *str, size_t size, const char *format, va_list ap) 
+{
 	char buf[size];
 	memset(buf, 0, size);
 	size_t n = 0;
@@ -203,7 +203,7 @@ int snprintf(char* str, size_t n, const char* fmt, ...)
 	return r;
 }
 
-static char buf[256];
+	char buf[256];
 int printf(const char* fmt, ...)
 {
 	int r;

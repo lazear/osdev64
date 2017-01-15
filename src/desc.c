@@ -1,7 +1,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "x86_64.h"
+#include <desc.h>
+#include <common.h>
 
 
 

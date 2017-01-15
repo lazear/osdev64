@@ -1,21 +1,17 @@
-#ifndef __X86_64_COMMON__
-#define __X86_64_COMMON__
+#ifndef __X86_64_DESC__
+#define __X86_64_DESC__
 
-#include <stddef.h>
 #include <stdint.h>
 
-extern void memset(void*, int c, size_t n);
-extern void memsetw(void*, int c, size_t n);
-extern void memcpy(void*, void*, size_t n);
-extern int strlen(char* s);
-extern char* strncpy(char* dest, const char* src, size_t n);
-extern char* strcpy(char* dest, const char* src);
-extern uint8_t inb(uint16_t port);
-extern void outb(uint16_t port, uint8_t data);
-extern void writemsr(size_t reg, size_t data);
-extern size_t readmsr(size_t reg);
+/**
+ * @brief Load a new GDT descriptor into GDTR, and flush all segments.
+ * @details Also loads a new TSS into task register.
+ * 
+ * @param gdtr Linear address of 10 byte GDT descriptor.
+ */
 extern void gdt_flush(uint64_t gdtr);
-
+extern void gdt_init(void);
+extern void idt_init(void);
 
 struct tss_64 {
 	uint32_t res_3;
@@ -83,7 +79,5 @@ struct tss_64 system_tss;
 
 /* Array of interrupt handlers */
 extern uint64_t vectors[256];
-
-
 
 #endif
