@@ -30,6 +30,7 @@ Kernel level printf. Should be removed once userspace is up and running
 #include <stdarg.h>
 #include <limits.h>
 
+#include <drivers/uart.h>
 #include <stdio.h>
 #include <common.h>
 
@@ -215,6 +216,7 @@ int printf(const char* fmt, ...)
 	va_end(ap);
 
 	vga_puts(buf);
+	uart_write(buf);
 
 	return r;
 }

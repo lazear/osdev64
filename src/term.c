@@ -30,6 +30,7 @@ Implementation of text-mode vga driver for crunchy
 #include <stddef.h>
 #include <stdatomic.h>
 
+#include <lock.h>
 #include <common.h>
 #include <stdio.h>
 
@@ -37,6 +38,7 @@ static struct vga_coord {
 	uint8_t* vga;
 	uint16_t attrib;
 	uint16_t x, y;
+	struct lock lock;
 } __tty_info = {
 	.vga = (uint8_t*) 0xFFFF8000000b8000,
 	.attrib = 0x7,
@@ -108,8 +110,10 @@ void vga_kputs(char* s, int x, int y) {
 }
 
 void vga_puts(char* s) {
+	lock_acquire(&__tty_info.lock);
 	while (*s != 0) 
 		vga_putc(*s++);
+	lock_release(&__tty_info.lock);
 }
 
 /* Automatically update text position, used in vga_puts */

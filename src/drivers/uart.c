@@ -27,6 +27,9 @@ SOFTWARE.
 #include <stdint.h>
 #include <common.h>
 #include <drivers/uart.h>
+#include <lock.h>
+
+static struct lock lock;
 
 void uart_init() 
 {
@@ -41,14 +44,16 @@ void uart_init()
 
 void uart_putc(char c) 
 {
-	while(inb(COM1 + 5) & 0x20 == 0);
+	while((inb(COM1 + 5) & 0x20) == 0);
 	outb(COM1, c);
 }
 
 void uart_write(const char* c) 
 {
+	lock_acquire(&lock);
 	while(*c) {
 		uart_putc(*c);
 		c++;
 	}
+	lock_release(&lock);
 }

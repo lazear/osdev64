@@ -6,6 +6,7 @@
 #include <vga.h>
 #include <interrupts.h>
 
+extern int x2apic_enabled(void);
 extern int printf(const char* fmt, ...);
 
 struct memory_map
@@ -40,10 +41,12 @@ void main(void)
 	}
 
 	printf("%dM total physical memory detected\n", phys_mem_detected / 0x100000);
-
+	printf("x2APIC? %d %x\n", x2apic_enabled(), readmsr(0x1B) & (1<<8));
 
 	sti();
 
 	pic_enable(32);
+	syscall_config();
+	asm volatile("syscall");
 	for(;;);
 }

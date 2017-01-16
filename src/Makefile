@@ -22,7 +22,7 @@ emu: compile clean run
 compile:
 	#Compile C source
 	$(CC) $(CCFLAGS) *.c	# Compile top level
-	
+	$(CC) $(CCFLAGS) drivers/*.c
 	#Assembly
 	$(AS) $(ASFLAGS) common_x86_64.asm -o common_x86_64.aso
 	$(AS) $(ASFLAGS) vectors.asm -o vectors.aso
@@ -36,7 +36,7 @@ compile:
 	dd if=$(FINAL) of=$(DISK) bs=1k seek=1 conv=notrunc 
 
 run:
-	qemu-system-x86_64 $(DISK) -m 32 -curses
+	qemu-system-x86_64 $(DISK) -m 32 -curses -smp cpus=4 -serial file:serial.txt
 
 	
 clean:

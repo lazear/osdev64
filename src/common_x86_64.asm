@@ -45,6 +45,18 @@ global outb
 global inb 
 global halt_catch_fire
 
+global x2apic_enabled
+x2apic_enabled:
+	mov rax, 1
+	cpuid
+	test ecx, (1<<29)
+	jz .no 
+	mov rax, 1
+	ret
+.no:
+	mov rax, 0
+	ret 
+
 ;;; Disable interrupts, halt, and repeat.
 halt_catch_fire:
 	cli
@@ -71,7 +83,9 @@ writemsr:
 	push rbp
 	mov rax, rsi 
 	mov rdx, rsi 
-	shr rax, 32 
+	; keep low bits 
+	and rax, 0x00000000FFFFFFFF 
+	; keep high bits
 	shr rdx, 32
 	mov rcx, rdi 
 	wrmsr 

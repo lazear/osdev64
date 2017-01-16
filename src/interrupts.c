@@ -32,6 +32,8 @@ SOFTWARE.
 
 extern void halt_catch_fire(void);
 
+static trap_handler handlers[256];
+
 static char* exceptions[] = {
 	"Divide by zero",
 	"Debug",
@@ -58,18 +60,35 @@ static char* exceptions[] = {
 	[0x1E] = "Security fault",
 };
 
+void trap_register(int num, void (*handler)(struct registers*))
+{	
+	if (num < 256)
+		handlers[num] = handler;
+}
+
+void trap_init(void)
+{
+	memset(handlers, 0, sizeof(trap_handler)*256);
+}
 
 void trap(struct registers* r)
 {
-	if (r->int_no < 0x20) {
-		asm volatile("cli");
+	if (handlers[r->int_no]) {
+		handlers[r->int_no](r);
+	} else if (r->int_no < IRQ_ZERO) {
 		/* safe printing... */
 		char buf[100];
 		snprintf(buf, 100, "CPU exception: %s\n", exceptions[r->int_no]);
 		vga_puts(buf);
 
 		halt_catch_fire();
+	} else {
+		// char buf[100];
+		// snprintf(buf, 100, "Unknown interrupt: %d\n", r->int_no);
+		// vga_puts(buf);
 	}
-
+	/* send EOI to slave PIC */
+	if (r->int_no > 40)
+		outb(0xA0, 0x20);
 	outb(0x20, 0x20);
 }
