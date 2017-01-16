@@ -8,6 +8,11 @@
 #define IA32_SYSENTER_EIP 		0x176
 #define IA32_EFER 		0xC0000080
 
+#define IA32_EFER_SCE 0		/* syscall/sysret enable */
+#define IA32_EFER_LME 8		/* long mode enable */
+#define IA32_EFER_LMA 10 	/* long mode active */
+#define IA32_EFER_NXE 11	/* execute disable bit enable */
+
 /* IA-32e mode system call. 
 CPUID.80000001:EDX[29] must = 1*/
 #define IA32_STAR 			0xC0000081 /* System call target address */

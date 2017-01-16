@@ -46,7 +46,7 @@ void main(void)
 	sti();
 
 	pic_enable(32);
-	syscall_config();
+	syscall_init();
 	asm volatile("syscall");
 	for(;;);
 }

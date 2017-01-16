@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <interrupts.h>
 #include <desc.h>
 #include <common.h>
 
@@ -25,7 +26,25 @@ void idt_set_gate(int n, int dpl, int type, uint64_t handler)
 	idt[n].type = ((1 << 0xF) | (dpl << 0xD) | (type << 0x8));
 }
 
+void idt_init(void)
+{
+	int i;
+	for (i = 0; i < 256; i++)
+		idt_set_gate(i, 0, 0xE, (uint64_t) vectors[i]);
 
+	/* Set SYSCALL (0x80) to DPL=3 */
+	idt_set_gate(SYSCALL, 3, 0xF, (uint64_t) vectors[i]);
+
+	uint8_t idtr[10];
+	*(uint16_t*) idtr = (uint16_t) 0xFFF;
+	*(uint64_t*) ((uint64_t) idtr + 2) = (uint64_t) &idt;
+
+	system_tss.ist[0] = 0xFFFF80000000A000;
+	system_tss.rsp[0] = 0xFFFF80000000A000;
+
+	asm volatile("lidt (%0)" : : "r" ((uint64_t)&idtr));
+
+}
 
 void gdt_init(void)
 {
@@ -62,19 +81,3 @@ void gdt_init(void)
 }
 
 
-void idt_init(void)
-{
-	int i;
-	for (i = 0; i < 256; i++)
-		idt_set_gate(i, 0, 0xE, (uint64_t) vectors[i]);
-
-	uint8_t idtr[10];
-	*(uint16_t*) idtr = (uint16_t) 0xFFF;
-	*(uint64_t*) ((uint64_t) idtr + 2) = (uint64_t) &idt;
-
-	system_tss.ist[0] = 0xFFFF80000000A000;
-	system_tss.rsp[0] = 0xFFFF80000000A000;
-	//printf('IST0: %x\n', system_tss.ist[0]);
-	asm volatile("lidt (%0)" : : "r" ((uint64_t)&idtr));
-
-}

@@ -10,11 +10,20 @@ void syscall(void)
 	for(;;);	
 }
 
-void syscall_config(void)
+
+/**
+ * @brief Initialize usage of "syscall" and "sysret" instructions.
+ */
+void syscall_init(void)
 {
-	writemsr(IA32_EFER, 1);
-	writemsr(IA32_STAR, (uint64_t) (0x8 << 32));
+	uint64_t cs = 0x800000000;
+	/* Enable "syscall" instruction */
+	writemsr(IA32_EFER, 1 << IA32_EFER_SCE);
+	/* Write CS to bits 32:47 of IA32_STAR MSR */
+	writemsr(IA32_STAR, cs);
+	/* Write RFLAGS mask to IA32_FMASK */
 	writemsr(IA32_FMASK, 0x202);
+	/* Write entry RIP to IA32_LSTAR */
 	writemsr(IA32_LSTAR, (uint64_t) syscall);
 }
 
