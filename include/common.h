@@ -16,5 +16,19 @@ extern void writemsr(size_t reg, size_t data);
 extern size_t readmsr(size_t reg);
 
 
+#define KERNEL_VIRT		0xFFFF800000100000
+#define INITIAL_TOP		0xFFFF800000400000
+
+#define ROUND_UP(a, b) (((a) + (b)) & ~((b) - 1))
+#define likely(x) 	__builtin_expect (x, 1)
+#define unlikely(x) __builtin_expect (x, 0)
+
+#ifndef NULL
+#define NULL ((void*) 0)
+#endif
+
+// Convert physical to higher half.
+#define P2V(x)	( ((size_t) (x) <= KERNEL_VIRT) ? ((size_t) (x) + KERNEL_VIRT) : (size_t) (x))
+#define V2P(x)	( ((size_t) (x) >= KERNEL_VIRT) ? ((size_t) (x) - KERNEL_VIRT) : (size_t) (x))
 
 #endif

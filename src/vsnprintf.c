@@ -1,8 +1,8 @@
 /*
-printf.c
+vsnprintf.c
 ===============================================================================
 MIT License
-Copyright (c) 2007-2016 Michael Lazear
+Copyright (c) Michael Lazear 2016-2017 
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,8 +22,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ===============================================================================
-Kernel level printf. Should be removed once userspace is up and running
 */
+
 
 #include <stddef.h>
 #include <stdint.h>
@@ -33,6 +33,7 @@ Kernel level printf. Should be removed once userspace is up and running
 #include <drivers/uart.h>
 #include <stdio.h>
 #include <common.h>
+#include <drivers/uart.h>
 
 #define isdigit(c)		(c >= '0' && c <= '9')
 
@@ -217,6 +218,22 @@ int printf(const char* fmt, ...)
 
 	vga_puts(buf);
 	uart_write(buf);
+<<<<<<< HEAD
 
+=======
+>>>>>>> buddy
 	return r;
+}
+
+int dprintf(const char* fmt, ...)
+{
+	int r;
+
+	memset(buf, 0, 256);
+	va_list ap;
+	va_start(ap, fmt);
+	r = vsnprintf(buf, 256, fmt, ap);
+	va_end(ap);
+	uart_write(buf);
+	return r;	
 }
