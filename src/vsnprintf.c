@@ -218,10 +218,6 @@ int printf(const char* fmt, ...)
 
 	vga_puts(buf);
 	uart_write(buf);
-<<<<<<< HEAD
-
-=======
->>>>>>> buddy
 	return r;
 }
 

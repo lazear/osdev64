@@ -69,15 +69,22 @@ void main(void)
 	}
 
 	printf("%dM total physical memory detected\n", phys_mem_detected / 0x100000);
+<<<<<<< HEAD
 	printf("x2APIC? %d %x\n", x2apic_enabled(), readmsr(0x1B) & (1<<8));
+=======
 
 	buddy_initialize(phys_mem_detected, 0xffff800000200000, 0x4000);
+>>>>>>> buddy
 
 	struct buddy* b = buddy_get(0, 0x4000);
 	printf("b->size %x, b->addr %x\n", b->size, b->addr);
 
+<<<<<<< HEAD
 	pic_enable(32);
 	syscall_init();
-
+	asm volatile("syscall");
+=======
+//	sti();
+>>>>>>> buddy
 	for(;;);
 }

@@ -22,7 +22,11 @@ emu: compile clean run
 compile:
 	#Compile C source
 	$(CC) $(CCFLAGS) *.c	# Compile top level
+<<<<<<< HEAD
+	$(CC) $(CCFLAGS) drivers/*.c
+=======
 	$(CC) $(CCFLAGS) drivers/*.c	# Compile top level
+>>>>>>> buddy
 	#Assembly
 	$(AS) $(ASFLAGS) common_x86_64.asm -o common_x86_64.aso
 	$(AS) $(ASFLAGS) vectors.asm -o vectors.aso
