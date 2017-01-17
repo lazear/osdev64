@@ -1,8 +1,8 @@
 /*
-vga.c
+term.c
 ===============================================================================
 MIT License
-Copyright (c) 2007-2016 Michael Lazear
+Copyright (c) Michael Lazear 2016-2017 
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ===============================================================================
-Implementation of text-mode vga driver for crunchy
 */
 
 

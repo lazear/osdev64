@@ -41,7 +41,7 @@ void uart_init()
 
 void uart_putc(char c) 
 {
-	while(inb(COM1 + 5) & 0x20 == 0);
+	while((inb(COM1 + 5) & 0x20) == 0);
 	outb(COM1, c);
 }
 
