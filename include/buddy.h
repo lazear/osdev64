@@ -34,6 +34,7 @@ SOFTWARE.
 
 
 #define S_MASK 		0x01F
+#define GOOD 		0x100
 #define LEFT_USED 	0x200
 #define RIGHT_USED 	0x400
 #define INUSE		0x800
@@ -55,8 +56,9 @@ struct buddy {
 } __attribute__((packed));
 
 extern void buddy_initialize(uint64_t, size_t, size_t);
-extern struct buddy* buddy_alloc(int size);
 extern void buddy_free(struct buddy* block);
+extern struct buddy* buddy_add_range(size_t start, size_t end);
+extern struct buddy* buddy_alloc(int size);
 extern struct buddy* buddy_get(size_t address, size_t size);
 
 

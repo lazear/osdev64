@@ -221,6 +221,22 @@ int printf(const char* fmt, ...)
 	return r;
 }
 
+int pprintf(int color, const char* fmt, ...)
+{
+	int r;
+
+	memset(buf, 0, 256);
+	va_list ap;
+	va_start(ap, fmt);
+	r = vsnprintf(buf, 256, fmt, ap);
+	va_end(ap);
+
+	vga_pretty(buf, color);
+	uart_write(buf);
+	return r;
+}
+
+
 int dprintf(const char* fmt, ...)
 {
 	int r;

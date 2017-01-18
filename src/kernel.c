@@ -59,25 +59,31 @@ void main(void)
 	struct memory_map* mmax = mmap + memlen;
 	printf("Control transferred to x86_64 kernel\n");
 
-
+	buddy_initialize(0x80000000, 0xffff800000200000, 0x4000);
 	uint64_t phys_mem_detected = 0;
 	while (mmap < mmax) {
-		printf("%8s memory detected %#x - %#x\n",(mmap->type & 0xF) == 1 ? "Usable" : "Reserved", mmap->base, mmap->base + mmap->len);
-		if ((mmap->type & 0xF) == 1)
+		//printf("%8s memory detected %#x - %#x\n",(mmap->type & 0xF) == 1 ? "Usable" : "Reserved", mmap->base, mmap->base + mmap->len);
+		if ((mmap->type & 0xF) == 1) {
+			struct buddy* a = buddy_add_range(mmap->base, mmap->base+mmap->len);
+			printf("INIT addr %#x - %#x\n", a->addr, a->addr + (1 << a->size));
 			phys_mem_detected += mmap->len;
+		}
 		mmap++;
 	}
-
+b_list();
 	printf("%dM total physical memory detected\n", phys_mem_detected / 0x100000);
 	printf("x2APIC? %d %x\n", x2apic_enabled(), readmsr(0x1B) & (1<<8));
 
-	buddy_initialize(phys_mem_detected, 0xffff800000200000, 0x4000);
 
-	struct buddy* b = buddy_get(0, 0x4000);
-	printf("b->size %x, b->addr %x\n", b->size, b->addr);
+	// pic_enable(32);
+	// syscall_init();
 
-	pic_enable(32);
-	syscall_init();
+
+
+	// for (int i = 0; i < 5; i++) {
+	// 	struct buddy* a = buddy_alloc(0x10000);
+	// 	printf("addr %#x - %#x\n", a->addr, a->addr + (1 << a->size));
+	// }
 
 	for(;;);
 }
