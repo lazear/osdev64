@@ -26,7 +26,8 @@ compile:
 	#Assembly
 	$(AS) $(ASFLAGS) common_x86_64.asm -o common_x86_64.aso
 	$(AS) $(ASFLAGS) vectors.asm -o vectors.aso
-
+	$(AS) $(ASFLAGS) sse.asm -o sse.o
+	$(AS) $(ASFLAGS) setjmp.asm -o setjmp.o
 	#Bootsector
 	$(AS) -f bin boot/boot.asm -o $(BOOTSECT) 
 	$(LD) $(LDFLAGS)	# Link using the i686-elf toolchain
@@ -36,7 +37,7 @@ compile:
 	dd if=$(FINAL) of=$(DISK) bs=1k seek=1 conv=notrunc 
 
 run:
-	qemu-system-x86_64 $(DISK) -m 32 -curses -smp cpus=4 -serial file:serial.txt
+	qemu-system-x86_64 $(DISK) -m 256 -cpu Nehalem -curses -smp cpus=4 -serial file:serial.txt
 
 	
 clean:

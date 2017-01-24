@@ -60,23 +60,33 @@ static char* exceptions[] = {
 	[0x1E] = "Security fault",
 };
 
+void breakpoint_handler(struct registers* r)
+{
+	printf("Breakpoint RIP %#x RFLAGS %x\n", r->rip, r->flags);
+	printf("rax %#x rbx %#x\n", r->rax, r->rbx);
+	printf("rcx %#x rdx %#x\n", r->rcx, r->rdx);
+	printf("rsi %#x rdi %#x\n", r->rsi, r->rdi);
+	printf("rsp %#x rbp %#x\n", r->rsp, r->rbp);
+	printf("r8  %#x r9  %#x\n", r->r8, r->r9);
+	printf("r10 %#x r11 %#x\n", r->r10, r->r11);
+	printf("r12 %#x r13 %#x\n", r->r12, r->r13);
+	printf("r14 %#x r15 %#x\n", r->r14, r->r15);
+}
+
 void trap_register(int num, void (*handler)(struct registers*))
 {	
 	if (num < 256)
 		handlers[num] = handler;
 }
 
-void trap_init(void)
-{
-	memset(handlers, 0, sizeof(trap_handler)*256);
-}
 
 void trap(struct registers* r)
 {
 	if (handlers[r->int_no]) {
 		handlers[r->int_no](r);
+
 	} else if (r->int_no < IRQ_ZERO) {
-		/* safe printing... */
+		/* CPU exception without a handler installed */
 		char buf[100];
 		snprintf(buf, 100, "CPU exception: %s\n", exceptions[r->int_no]);
 		vga_puts(buf);
@@ -91,4 +101,11 @@ void trap(struct registers* r)
 	if (r->int_no > 40)
 		outb(0xA0, 0x20);
 	outb(0x20, 0x20);
+}
+
+
+void trap_init(void)
+{
+	memset(handlers, 0, sizeof(trap_handler)*256);
+	trap_register(3, breakpoint_handler);
 }

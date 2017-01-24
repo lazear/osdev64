@@ -32,7 +32,7 @@ SOFTWARE.
 #include <vga.h>
 #include <interrupts.h>
 #include <buddy.h>
-
+#include <setjmp.h>
 
 extern int x2apic_enabled(void);
 extern int printf(const char* fmt, ...);
@@ -44,6 +44,15 @@ struct memory_map
 	uint64_t type;
 };
 
+extern int sse42_enabled(void);
+extern char* sse_strchr(const char* s, char c);
+
+
+void t9(void)
+{
+	printf("jmp");
+	halt_catch_fire();
+}
 
 char buf[100];
 void main(void)
@@ -51,7 +60,7 @@ void main(void)
 	gdt_init();
 	idt_init();
 	pic_init();
-
+	trap_init();
 	vga_clear();
 
 	uint8_t memlen = *(uint8_t*) 0x6FF0 / sizeof(struct memory_map);
@@ -70,20 +79,27 @@ void main(void)
 		}
 		mmap++;
 	}
-b_list();
+
 	printf("%dM total physical memory detected\n", phys_mem_detected / 0x100000);
 	printf("x2APIC? %d %x\n", x2apic_enabled(), readmsr(0x1B) & (1<<8));
-
-
+	printf("SSE4.2? %d\n", sse42_enabled());
+	//printf("strchr %s\n", sse_strchr("The quick brown fox jumped over the lazy dog", 'j'));
 	// pic_enable(32);
 	// syscall_init();
 
+	printf("Before jmp\n");
+	struct jmp_buf j;
+	uint64_t x = setjmp(&j);
+
+	printf("After jmp %x\n", x);
+	if (x != 10)
+		longjmp(&j, 10);
+	if (x == 10) {
+		j.rip = t9;
+		longjmp(&j, 12);
+	}
 
 
-	// for (int i = 0; i < 5; i++) {
-	// 	struct buddy* a = buddy_alloc(0x10000);
-	// 	printf("addr %#x - %#x\n", a->addr, a->addr + (1 << a->size));
-	// }
 
 	for(;;);
 }
