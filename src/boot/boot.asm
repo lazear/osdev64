@@ -58,7 +58,7 @@ entry:
 	mov word [packet.dest], 0x7E00
 	mov word [packet.count], 80
 	call read_disk
-
+	
 	; Clear ax register, set all segments to zero
 	xor ax, ax
 	mov ds, ax
