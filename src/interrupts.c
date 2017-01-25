@@ -29,6 +29,7 @@ SOFTWARE.
 #include <common.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <mmu.h>
 
 extern void halt_catch_fire(void);
 
@@ -73,6 +74,31 @@ void breakpoint_handler(struct registers* r)
 	printf("r14 %#x r15 %#x\n", r->r14, r->r15);
 }
 
+void page_fault(struct registers* r) 
+{
+	cli();
+	size_t cr2;
+	asm volatile("mov %%cr2, %%rax" : "=a"(cr2));
+
+	printf("Page Fault(%d): cr2 %#x\n", r->err_no, cr2);
+	printf("Faulting instruction:  %#x (%s)\n", r->rip, (r->cs == 0x23) ? "User process" : "Kernel code");
+	printf("Current stack pointer: %#x\n", r->rsp);
+
+	dprintf("Page Fault(%d): cr2 %#x\n", r->err_no, cr2);
+	dprintf("Faulting instruction:  %#x (%s)\n", r->rip, (r->cs == 0x23) ? "User process" : "Kernel code");
+	dprintf("Current stack pointer: %#x\n", r->rsp);
+
+	if (r->err_no & PRESENT)	printf(" \tPage Not Present\n");
+	if (r->err_no & RW) 		printf(" \tPage Not Writeable\n");
+	if (r->err_no & USER) 		printf(" \tPage Supervisor Mode\n");
+
+	if (r->cs == 0x23)
+
+	asm volatile("mov %%rax, %%cr2" :: "a"(0x00000000));
+	halt_catch_fire();
+}
+
+
 void trap_register(int num, void (*handler)(struct registers*))
 {	
 	if (num < 256)
@@ -108,4 +134,5 @@ void trap_init(void)
 {
 	memset(handlers, 0, sizeof(trap_handler)*256);
 	trap_register(3, breakpoint_handler);
+	trap_register(14, page_fault);
 }

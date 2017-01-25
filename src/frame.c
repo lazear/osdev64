@@ -33,6 +33,7 @@ SOFTWARE.
 #include <lock.h>
 #include <common.h>
 #include <frame.h>
+#include <mmu.h>
 
 static struct lock page_lock;
 
@@ -42,6 +43,8 @@ static list(lru);
 
 static size_t numpages;
 static struct page* parray;
+static size_t num_free_pages = 0;
+static size_t num_used_pages = 0;
 
 /**
  * @brief Initialize physical memory manager.
@@ -58,24 +61,43 @@ void page_init(size_t memory, size_t table)
 
 	table = ROUND_UP(table, PAGE_SIZE);
 	numpages = ROUND_UP(memory, PAGE_SIZE) / PAGE_SIZE;
-	parray = (void*) table;
+
 
 	int r = ROUND_UP((numpages * sizeof(struct page)), PAGE_SIZE) / PAGE_SIZE;
 	int i = 0;
 
+	/* Handle cases where total number of physical pages will not fit inside
+	 * of the previously mapped virtual area (0-4MB)... I.e. this will
+	 * almost certainly happen on real machines, since the cutoff mark is 
+	 * ~128 MB of physical memory */
+	size_t mmu[3] = {0,0,0};
+	assert((table + 3*PAGE_SIZE) < INITIAL_TOP);
 	if ((r*PAGE_SIZE + table) > V2P(INITIAL_TOP)) {
-		int req = (r*PAGE_SIZE + table);
-		printf("Remove RAM and try again\nNeed to map up to %x\n", req);
-		halt_catch_fire();
+		int req = ROUND_UP((r*PAGE_SIZE + table), 0x200000);
+		mmu[0] = table;
+		mmu[1] = table + (PAGE_SIZE*1);
+		mmu[2] = table + (PAGE_SIZE*2);
+		table += PAGE_SIZE*3;
+		printf("Memory overload - remove RAM and reboot\nAttempting bootstrap to %#x\n", req);
+		mmu_bootstrap(req, (void*)mmu[0], (void*)mmu[1], (void*)mmu[2]);
+
 	}
 
-	/* Initialize all pages in system */
+	parray = (void*) table;
+	/* Initialize all pages in system 
+	 * Don't add to free list yet... wait until we are told to do so explicitly */
 	for (i = 0; i < numpages; i++) {
 		struct page* p = &parray[i];
 		list_init(&p->lru);
 		list_init(&p->pages);
 		p->address = (i * PAGE_SIZE);
-		list_add_tail(&free, &p->pages);
+	}
+
+	for (i = 0; i < 3; i++) {
+		if (mmu[i]) {
+			struct page* p = &parray[(ROUND_DOWN(mmu[i], PAGE_SIZE) / PAGE_SIZE)];
+			p->flags = P_IMMUTABLE | P_VIRT | P_KERNEL;
+		}
 	}
 
 	/* Mark pages that we're using to hold page-structs as in-use */
@@ -83,8 +105,6 @@ void page_init(size_t memory, size_t table)
 		int j = i + (ROUND_DOWN(table, PAGE_SIZE) / PAGE_SIZE);
 		struct page* p = &parray[j];
 		p->flags = P_IMMUTABLE | P_PHYS | P_KERNEL;
-		/* Remove from free list */
-		list_del(&p->pages);
 	}
 	lock_init(&page_lock);
 
@@ -120,12 +140,12 @@ int page_mark_range(size_t start, size_t end, int flags)
 	size_t s = ROUND_DOWN(start, PAGE_SIZE) / PAGE_SIZE;
 	size_t e = ROUND_UP(end, PAGE_SIZE) / PAGE_SIZE;
 	assert(e <= numpages);
-
+	lock_acquire(&page_lock);
 	for (; s < e; s ++) {
 		struct page* p = &parray[s];
 
-		/* Do not allow changing of physical page flags */
-		if (p->flags & P_PHYS) 
+		/* Do not allow changing of physical page flags or page tables */
+		if (p->flags & (P_PHYS | P_VIRT)) 
 			continue;
 
 		p->flags = flags;
@@ -133,11 +153,15 @@ int page_mark_range(size_t start, size_t end, int flags)
 		if (flags & P_USED) {
 			list_move_tail(&used, &p->pages);
 			list_move_tail(&lru, &p->lru);
+			num_used_pages++;
+
 		} else {
 			list_move_tail(&free, &p->pages);
+			num_free_pages++;
 		}		
 	}
 	dprintf("[phys] marked pages from %#x to %#x as %x\n", start, end, flags);
+	lock_release(&page_lock);
 	return 0;
 }
 
@@ -154,11 +178,14 @@ struct page* page_alloc(void)
 		return NULL;
 
 	lock_acquire(&page_lock);
+
 	struct page* p = list_first_entry(&free, struct page, pages);
 	list_add_tail(&lru, &p->lru);
 	list_move(&used, &p->pages);
-	lock_release(&page_lock);
+	num_used_pages++;
+	num_free_pages--;
 
+	lock_release(&page_lock);
 	return p;
 }
 
@@ -171,6 +198,8 @@ void page_free(struct page* p)
 	lock_acquire(&page_lock);
 	list_move_tail(&free, &p->pages);
 	list_del(&p->lru);
+	num_used_pages--;
+	num_free_pages++;
 	lock_release(&page_lock);
 	dprintf("[phys] freeing page %#x\n", p->address);
 }
@@ -194,177 +223,27 @@ void page_lru(void)
 	}
 }
 
+
+void page_stats(void)
+{
+	size_t total = num_free_pages+num_used_pages;
+	size_t usage = 100*(num_used_pages/total);
+	size_t avail = (100*total/ numpages);
+	printf("Memory available for use: %d%%, %d MB\n", avail, num_free_pages/0x100);
+	printf("Memory currently in use:  %d%%, %d MB\n", usage, num_used_pages/0x100);
+}
+
 void page_test(void)
 {
 	int i;
-	for (i = 0; i < 512; i++) {
+	printf("Testing physical memory allocator\n");
+	printf("Free pages: %d, Used pages %d\n", num_free_pages, num_used_pages);
+	printf("Allocating 512 pages\n");
+	for (i = 0; i < 1024; i++) {
 		struct page* p = page_alloc();
-		dprintf("got page %#x\n", p->address);
-	}
-	//page_lru();
-	printf("Testing page request...\n");
-	size_t addr = 0x200000	;
-	printf("%x, %x\n", addr, page_request(addr)->address);
-}
-
-
-#define PRESENT (1<<0)
-#define RW 		(1<<1)
-#define USER 	(1<<2)
-#define PWT		(1<<3)
-#define PCD 	(1<<4)
-#define ACCESS  (1<<5)
-#define DIRTY 	(1<<6)
-#define PS 		(1<<7)
-
-#define PML4E(x) (((x) >> 39) & 0x1FF)
-#define PDPTE(x) (((x) >> 30) & 0x1FF)
-#define PDE(x) (((x) >> 21) & 0x1FF)
-#define PTE(x) (((x) >> 12) & 0x1FF)
-
-static struct page* PML4;
-
-void mmu_init(void)
-{
-	size_t cr3;
-	asm volatile("mov %%cr3, %0" : "=r"(cr3));
-
-	PML4 = page_request(cr3);
-	assert(PML4);
-	PML4->data = (void*) cr3;
-	PML4->flags = P_USED | P_IMMUTABLE | P_KERNEL | P_VIRT;
-	list_del(&PML4->pages);
-	list_del(&PML4->lru);
-}
-
-int _ismapped(size_t address)
-{
-
-}
-
-/**
- * @brief Map enough virtual memory to contain our physical page array.
- * @details 2 megabyte pages are identity mapped, and mapped to KERNEL_VIRT, up
- * to physical address provided. PML4 and associated structures will be reloaded 
- * at the end of the call. All parameters provided should be previously mapped
- * and accessible without page faulting. This provides enough overhead to map up 
- * to 4 GB of physical pages.
- * 
- * @param physical Amount of memory needed for array.
- * @param pml4 Physical page address of new PML4.
- * @param pdpt Physical page address of new PDPT.
- * @param pd Physical page address of new PD.
- */
-void mmu_bootstrap(size_t physical, size_t* pml4, size_t* pdpt, size_t* pd)
-{
-	int i;
-	pdpt[PDPTE(0)] = ((size_t) pd) | (PRESENT | RW);
-
-	pml4[PML4E(0)] 				= ((size_t) pdpt) | (PRESENT | RW);
-	pml4[PML4E(KERNEL_VIRT)] 	= ((size_t) pdpt) | (PRESENT | RW);
-
-	for (i = 0; i < physical; i += 0x00200000) {
-		pd[PDE(i)] = physical | (PRESENT | RW | PS);
+		assert(p);
+		//	dprintf("got page %#x\n", p->address);
 	}
 
-	asm volatile("mov %0, %%cr3" : : "r"(pml4));
-}
-
-void mmu_map2mb(size_t physical, size_t address, int flags) 
-{
-	size_t* pml4 = PML4->data;
-	size_t* pdpt;
-	size_t* pd;
-
-	physical = ROUND_DOWN(physical, (1<<21));
-	printf("physical address %x", physical);
-
-	if (pml4[PML4E(address)] & PRESENT) {
-		pdpt = (size_t*) ROUND_DOWN(pml4[PML4E(address)], PAGE_SIZE);
-	} else {
-		struct page* p = page_alloc();
-		pdpt = (size_t*) p->address;
-		pml4[PML4E(address)] = ((size_t) pd) | (PRESENT | RW);
-	}
-
-	/* Check for existing page directory */
-	if (pdpt[PDPTE(address)] & PRESENT) {
-		if (pdpt[PDPTE(address)] & PS) {
-			/* Map a 1GB page */
-		}
-		pd = (size_t*) ROUND_DOWN(pdpt[PDPTE(address)], PAGE_SIZE);
-	} else {
-		struct page* p = page_alloc();
-		pd = (size_t*) p->address;
-		pdpt[PDPTE(address)] = ((size_t) pd) | (PRESENT | RW);
-	}
-
-	pd[PDE(address)] = (physical | flags) | PS;
-}
-
-void mmu_map(uint64_t address)
-{
-	size_t* pml4 = PML4->data;
-	size_t* pdpt;
-	size_t* pd;
-	size_t* pt;
-	size_t phys;
-
-	if (pml4[PML4E(address)] & PRESENT) {
-		pdpt = (size_t*) ROUND_DOWN(pml4[PML4E(address)], PAGE_SIZE);
-	} else {
-		struct page* p = page_alloc();
-		pdpt = (size_t*) p->address;
-		pml4[PML4E(address)] = ((size_t) pd) | (PRESENT | RW);
-	}
-
-	/* Check for existing page directory */
-	if (pdpt[PDPTE(address)] & PRESENT) {
-		if (pdpt[PDPTE(address)] & PS) {
-			/* Map a 1GB page */
-		}
-		pd = (size_t*) ROUND_DOWN(pdpt[PDPTE(address)], PAGE_SIZE);
-	} else {
-		struct page* p = page_alloc();
-		pd = (size_t*) p->address;
-		pdpt[PDPTE(address)] = ((size_t) pd) | (PRESENT | RW);
-	}
-
-	if (pd[PDE(address)] & PRESENT) {
-		if (pd[PDE(address)] & PS) {
-			/* Map a 2MB page */
-		}
-		pt = (size_t*) ROUND_DOWN(pd[PDE(address)], PAGE_SIZE);
-	} else {
-		struct page* p = page_alloc();
-		pt = (size_t*) p->address;
-		pd[PDE(address)] = ((size_t) pd) | (PRESENT | RW);
-	}
-	
-
-	phys = ROUND_DOWN(pt[(address >> 12) & 0x1FF], PAGE_SIZE);
-
-	printf("pml4 %x\n", pml4);
-	printf("pdpt %x\n", pdpt);
-	printf("pd   %x\n", pd);
-	printf("pt   %x\n", pt);
-	printf("phys %x\n", phys);
-	// if (((size_t) pml4) & 0xFFF == 0)
-	// 	printf("ERROR!\n");
-
-
-	// uint64_t pdp, pd, pt, offset;
-	// pdp		= (address >> 30) & 0x1FF;
-	// pd 		= (address >> 21) & 0x1FF;
-	// pt 		= (address >> 12) & 0x1FF;
-	// offset  = (address) & 0xFFF;
-	
-
-	// printf("cr3:\t%#x\n", PML4->data);
-	// printf("pml4:\t%#x\n", pml4);
-	// printf("pdp:\t%#x\n",  pdp);
-
-	// printf("pd:\t%#x\n",pd);
-	// printf("pt:\t%#x\n", pt);
-	// printf("offset:\t%#x\n", offset);
+	page_stats();
 }

@@ -15,6 +15,7 @@ extern void outb(uint16_t port, uint8_t data);
 extern void writemsr(size_t reg, size_t data);
 extern size_t readmsr(size_t reg);
 
+extern void halt_catch_fire(void);
 
 #define KERNEL_VIRT		0xFFFF800000000000
 #define INITIAL_TOP		0xFFFF800000400000
@@ -39,7 +40,7 @@ extern size_t readmsr(size_t reg);
 extern size_t _kernel_start;
 extern size_t _kernel_end;
 
-#define KERNEL_START (&_kernel_start)
-#define KERNEL_END (&_kernel_end)
+#define KERNEL_START ((size_t)&_kernel_start)
+#define KERNEL_END ((size_t)&_kernel_end)
 
 #endif

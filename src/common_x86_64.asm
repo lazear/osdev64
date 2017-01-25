@@ -82,7 +82,7 @@ writemsr:
 	mov rax, rsi 
 	mov rdx, rsi 
 	; keep low bits 
-	and rax, 0x00000000FFFFFFFF 
+	and eax, -1 
 	; keep high bits
 	shr rdx, 32
 	mov rcx, rdi 

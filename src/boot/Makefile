@@ -1,5 +1,4 @@
 FINAL = bootstrap
-DISK = ../disk.img
 AS	= nasm
 ASFLAGS = -f bin
 SOURCE = boot.asm elf64.asm
@@ -15,3 +14,4 @@ $(FINAL): $(SOURCE)
 	@dd if=$(FINAL) of=$(DISK) bs=1k count=1 conv=notrunc 
 
 all: $(FINAL)
+

@@ -27,12 +27,14 @@ SOFTWARE.
 #include <stdint.h>
 #include <stddef.h>
 #include <common.h>
+#include <interrupts.h>
+#include <frame.h>
+#include <mmu.h>
 #include <desc.h>
 #include <stdio.h>
 #include <vga.h>
-#include <interrupts.h>
-#include <frame.h>
 #include <sse.h>
+
 
 extern int x2apic_enabled(void);
 extern int printf(const char* fmt, ...);
@@ -44,7 +46,7 @@ struct memory_map
 	uint64_t type;
 };
 
-extern void mmu_map2mb(uint64_t physical, uint64_t address, int flags) ;
+extern void mmu_map1gb(size_t physical, size_t address, int flags);
 
 void main(void)
 {
@@ -90,21 +92,14 @@ void main(void)
 	}
 	/* Mark everything below end of kernel as belonging to us */
 	page_mark_range(0, V2P(KERNEL_END), P_KERNEL|P_IMMUTABLE|P_USED);
-
 	/* Physical memory manager is now up and running */
+
+	mmu_init();
 
 	dprintf("[init] probing processor features\n");
 	//printf("%dM total physical memory detected\n", phys_mem_detected / 0x100000);
 	printf("x2APIC? %d\n", x2apic_enabled() & (1<<21));
 	printf("SSE4.2? %d\n", sse42_enabled());
 
-	//page_test();
-
-	mmu_init();
-	mmu_map(KERNEL_END+0);
-
-	mmu_map2mb(0, 0, 0x3);
-	mmu_map2mb(0x400000, 0x400000, 0x3);
-	mmu_map2mb(0x400000, 0x400000, 0x3);
 	for(;;);
 }
