@@ -37,7 +37,7 @@ compile:
 	dd if=$(FINAL) of=$(DISK) bs=1k seek=1 conv=notrunc 
 
 run:
-	qemu-system-x86_64 $(DISK) -m 256 -cpu Nehalem -curses -smp cpus=4 -serial file:serial.txt
+	qemu-system-x86_64 $(DISK) -m 128 -cpu Nehalem,+x2apic -curses -smp cpus=4 -serial file:serial.txt
 
 	
 clean:

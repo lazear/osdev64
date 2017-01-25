@@ -1,5 +1,5 @@
-#ifndef __SSE__
-#define __SSE__
+#ifndef __SSE42__
+#define __SSE42__
 
 extern int sse42_enabled(void);
 extern char* sse_strchr(const char*, char);

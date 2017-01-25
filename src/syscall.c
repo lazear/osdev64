@@ -1,12 +1,11 @@
-
+#include <interrupts.h>
 #include <common.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <msr.h>
 
-void syscall(void)
+void syscall(struct registers* r)
 {
-	printf("SYSCALL");
 	for(;;);	
 }
 
@@ -22,7 +21,7 @@ void syscall_init(void)
 	/* Write CS to bits 32:47 of IA32_STAR MSR */
 	writemsr(IA32_STAR, cs);
 	/* Write RFLAGS mask to IA32_FMASK */
-	writemsr(IA32_FMASK, 0x202);
+	writemsr(IA32_FMASK, 0x200);
 	/* Write entry RIP to IA32_LSTAR */
 	writemsr(IA32_LSTAR, (uint64_t) syscall);
 }

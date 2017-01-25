@@ -33,7 +33,7 @@ SOFTWARE.
 #include <drivers/uart.h>
 #include <stdio.h>
 #include <common.h>
-#include <drivers/uart.h>
+
 
 #define isdigit(c)		(c >= '0' && c <= '9')
 
@@ -205,7 +205,7 @@ int snprintf(char* str, size_t n, const char* fmt, ...)
 	return r;
 }
 
-	char buf[256];
+static char buf[256];
 int printf(const char* fmt, ...)
 {
 	int r;
@@ -217,7 +217,6 @@ int printf(const char* fmt, ...)
 	va_end(ap);
 
 	vga_puts(buf);
-	uart_write(buf);
 	return r;
 }
 
@@ -240,7 +239,6 @@ int pprintf(int color, const char* fmt, ...)
 int dprintf(const char* fmt, ...)
 {
 	int r;
-
 	memset(buf, 0, 256);
 	va_list ap;
 	va_start(ap, fmt);

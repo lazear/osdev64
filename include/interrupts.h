@@ -22,6 +22,9 @@ extern void pic_enable(int irq);
 extern void pic_disable(void);
 extern void pic_init(void);
 
+extern void syscall_init(void);
+extern void syscall(struct registers* r);
+
 static inline void cli(void)
 {
 	asm volatile("cli");

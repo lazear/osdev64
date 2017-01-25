@@ -9,6 +9,7 @@ SECTIONS
 
     . = KERNEL_VIRT + KERNEL_PHYS;
     
+    _kernel_start = .;
     .text ALIGN(0x1000) : AT(ADDR(.text) - KERNEL_VIRT)
     {
         *(.text)
@@ -27,7 +28,7 @@ SECTIONS
         *(COMMON)
    }
 
-   end = .;
+   _kernel_end = .;
 
 
    /DISCARD/ :

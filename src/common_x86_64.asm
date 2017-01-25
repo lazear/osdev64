@@ -49,13 +49,11 @@ global x2apic_enabled
 x2apic_enabled:
 	mov rax, 1
 	cpuid
-	test ecx, (1<<29)
-	jz .no 
-	mov rax, 1
+	test ecx, (1<<21)
+	mov rax, rcx
+	;xor rax, rax
+	;setne al
 	ret
-.no:
-	mov rax, 0
-	ret 
 
 ;;; Disable interrupts, halt, and repeat.
 halt_catch_fire:
@@ -200,7 +198,6 @@ strcpy:
 		jmp .l1
 	.done:
 		ret
-
 
 ; rax = strlen(rdi)
 ; trashes rax, rsi, rcx
