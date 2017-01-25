@@ -44,6 +44,7 @@ struct memory_map
 	uint64_t type;
 };
 
+extern void mmu_map2mb(uint64_t physical, uint64_t address, int flags) ;
 
 void main(void)
 {
@@ -67,14 +68,14 @@ void main(void)
 	while (mmap < mmax) {
 		size_t start = mmap->base;
 		size_t end = mmap->base+mmap->len;
-		printf("%8s memory detected %#x - %#x\n",(mmap->type & 0xF) == 1 ? "Usable" : "Reserved", start, end);
+		dprintf("[init] %8s memory detected %#x - %#x\n",(mmap->type & 0xF) == 1 ? "Usable" : "Reserved", start, end);
 		if ((mmap->type & 0xF) == 1) {
 			highest_addr = mmap->len + mmap->base;
 		}
 		mmap++;
 	}
 	page_init(highest_addr, V2P(KERNEL_END));
-	for(;;);
+
 	mmap = (struct memory_map*) 0x7000;
 	while (mmap < mmax) {
 		if (mmap->base+mmap->len <= highest_addr) {
@@ -97,6 +98,13 @@ void main(void)
 	printf("x2APIC? %d\n", x2apic_enabled() & (1<<21));
 	printf("SSE4.2? %d\n", sse42_enabled());
 
-	page_test();
+	//page_test();
+
+	mmu_init();
+	mmu_map(KERNEL_END+0);
+
+	mmu_map2mb(0, 0, 0x3);
+	mmu_map2mb(0x400000, 0x400000, 0x3);
+	mmu_map2mb(0x400000, 0x400000, 0x3);
 	for(;;);
 }
