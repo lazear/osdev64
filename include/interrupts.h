@@ -13,7 +13,6 @@
 #define IRQ_SPURIOUS	0xDF
 
 typedef void (*trap_handler) (struct registers* r);
-
 extern void trap_init(void);
 extern void trap(struct registers* r);
 extern void trap_register(int num, void (*handler)(struct registers*));
