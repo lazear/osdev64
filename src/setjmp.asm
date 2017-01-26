@@ -2,6 +2,7 @@
 section .text 
 global setjmp 
 global longjmp 
+global sys_exit
 
 ; Save a jmp_buf, containing registers that must be preserved across calls
 ; rbx, rsp, rbp, r12, r13, r15, r15, rip
@@ -23,6 +24,26 @@ setjmp:
 
 	ret 
 
+
+sys_exit:
+	; mov r10, rdi
+	; mov r9, rsi
+	; pop rax 
+	; pop rdi
+	; pop rsi 
+	; pop rdx
+	; pop rcx 
+	; pop r11 
+	; pop rbx 
+	; pop rbp
+	; pop r12 
+	; pop r13 
+	; pop r14 
+	; pop r15 
+	; pop rsp
+	; mov rdi, r10 
+	; mov rsi, r9
+	;hlt
 ;;; longjmp(rdi= jmp_buf, rsi= value)
 longjmp:
 	mov rax, rsi 
@@ -33,4 +54,6 @@ longjmp:
 	mov r13, [rdi+0x20]
 	mov r14, [rdi+0x28]
 	mov r15, [rdi+0x30]
+
+	;hlt
 	jmp [rdi+0x38]

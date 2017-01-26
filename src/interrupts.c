@@ -113,9 +113,18 @@ void trap(struct registers* r)
 
 	} else if (r->int_no < IRQ_ZERO) {
 		/* CPU exception without a handler installed */
-		char buf[100];
-		snprintf(buf, 100, "CPU exception: %s\n", exceptions[r->int_no]);
-		vga_puts(buf);
+		
+		printf("CPU exception: %s\n", exceptions[r->int_no]);
+		printf("RIP %#x RFLAGS %x\n", r->rip, r->flags);
+		printf("rax %#x rbx %#x\n", r->rax, r->rbx);
+		printf("rcx %#x rdx %#x\n", r->rcx, r->rdx);
+		printf("rsi %#x rdi %#x\n", r->rsi, r->rdi);
+		printf("rsp %#x rbp %#x\n", r->rsp, r->rbp);
+		printf("r8  %#x r9  %#x\n", r->r8, r->r9);
+		printf("r10 %#x r11 %#x\n", r->r10, r->r11);
+		printf("r12 %#x r13 %#x\n", r->r12, r->r13);
+		printf("r14 %#x r15 %#x\n", r->r14, r->r15);
+
 
 		halt_catch_fire();
 	} else {

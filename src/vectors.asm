@@ -53,6 +53,79 @@ trap_handler:
 	add rsp, 16
 	iretq
 
+global syscall_entry
+global sysret_entry
+
+; Stack pointers for SYSCALL/SYSRET are not specified through model specific registers. The clearing of bits in
+; RFLAGS is programmable rather than fixed. SYSCALL/SYSRET save and restore the RFLAGS register.
+; For SYSCALL, the processor saves RFLAGS into R11 and the RIP of the next instruction into RCX; it then gets the
+; privilege-level 0 target code segment, instruction pointer, stack segment, and flags as follows:
+; • Target code segment — Reads a non-NULL selector from IA32_STAR[47:32].
+; • Target instruction pointer — Reads a 64-bit address from IA32_LSTAR. (The WRMSR instruction ensures
+; that the value of the IA32_LSTAR MSR is canonical.)
+; • Stack segment — Computed by adding 8 to the value in IA32_STAR[47:32].
+; • Flags — The processor sets
+
+; setjmp:
+; 	pop rsi 				; rip is at top of stack 
+; 	xor rax, rax 			; return value
+; 	mov [rdi+0x00], rbx 
+; 	mov [rdi+0x08], rsp		; Post-return rsp
+; 	push rsi 				; Realign stack 
+; 	mov [rdi+0x10], rbp 
+; 	mov [rdi+0x18], r12 
+; 	mov [rdi+0x20], r13 
+; 	mov [rdi+0x28], r14 
+; 	mov [rdi+0x30], r15
+; 	mov [rdi+0x38], rsi 	; rip
+
+; 	ret 
+extern syscall_handler
+syscall_entry:
+	push rsp
+	push r15
+	push r14
+	push r13 
+	push r12 
+	push rbp 
+	push rbx 
+	push r11 	; rflags
+	push rcx 	; return address 
+	push rdx
+	push rsi 
+	push rdi 
+	push rax 	; syscall number 
+	mov rdi, rsp
+	call syscall_handler
+
+
+
+; When SYSRET transfers control to 64-bit mode user code using REX.W, the processor gets the privilege level 3
+; target code segment, instruction pointer, stack segment, and flags as follows:
+; • Target code segment — Reads a non-NULL selector from IA32_STAR[63:48] + 16.
+; • Target instruction pointer — Copies the value in RCX into RIP.
+; • Stack segment — IA32_STAR[63:48] + 8.
+; • EFLAGS — Loaded from R11.
+
+sysret_entry:
+	pop rax 
+	pop rdi
+	pop rsi 
+	pop rdx
+	pop rcx 
+	pop r11 
+	pop rbx 
+	pop rbp
+	pop r12 
+	pop r13 
+	pop r14 
+	pop r15 
+	pop rsp
+
+	jmp rcx
+	hlt
+	sysret
+
 vector0:
 	push 0
 	push 0

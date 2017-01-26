@@ -32,6 +32,7 @@ SOFTWARE.
 #include <elf.h>
 #include <frame.h>
 #include <mmu.h>
+#include <interrupts.h>
 
 void elf_objdump(void* data) {
 	Elf64_Ehdr *ehdr = (Elf64_Ehdr*) data;
@@ -166,7 +167,6 @@ void memcpy(void *s1,  void *s2, size_t n) {
 void elf_load(void* data) {
 	Elf64_Ehdr * ehdr = (Elf64_Ehdr*) data; 
 
-	//elf_objdump(data);
 	Elf64_Phdr* phdr 		= (void*) ((size_t) data + ehdr->e_phoff);
 	Elf64_Phdr* last_phdr 	= (void*) ((size_t) phdr + (ehdr->e_phentsize * ehdr->e_phnum));
 	size_t off = (phdr->p_vaddr - phdr->p_paddr);
@@ -177,28 +177,21 @@ void elf_load(void* data) {
 			phdr++;
 			continue;
 		}
-		printf("LOAD:\toff 0x%x\tvaddr\t0x%x\tpaddr\t0x%x\n\t\tfilesz\t%d\tmemsz\t%d\talign\t%x\t\n",
+		
+		/*printf("LOAD:\toff 0x%x\tvaddr\t0x%x\tpaddr\t0x%x\n\t\tfilesz\t%d\tmemsz\t%d\talign\t%x\t\n",
 		 	phdr->p_offset, phdr->p_vaddr, phdr->p_paddr, phdr->p_filesz, phdr->p_memsz, phdr->p_align);
-
+		*/
 		for (int i = 0; i <= phdr->p_memsz; i += 0x1000) {
-			//if ()
-			struct page* p = mmu_req_page(phdr->p_vaddr + i, 0x7);			// Map that page in KPD
-			//printf("Mapped %x->%x\n", p->address, phdr->p_vaddr + i);
+			struct page* p = mmu_req_page(phdr->p_vaddr + i, 0x7);
 		}
 		memset(phdr->p_vaddr, 0, phdr->p_memsz);
-		//printf("memcpy: %x, %x, %x\n", phdr->p_vaddr, (size_t)data + phdr->p_offset, phdr->p_filesz);
 		memcpy(phdr->p_vaddr, (size_t)data + phdr->p_offset, phdr->p_filesz);
-		printf("%x\n", *((size_t*) phdr->p_vaddr));
-		//printf("memcpy done\n");
 		phdr++;
 	}
 	last_phdr--;
+	extern void execat(size_t argc, size_t argv, size_t rip);
+	int i = setjmp(&sys_exit_buf);
+	if (!i)
+		execat(1, NULL, ehdr->e_entry);
 
-
-	printf("Program entry @ %#x\n", ehdr->e_entry);
-	int (*e)() = ehdr->e_entry;
-	for (int i = 0; i < 8; i++)
-		printf("%#x: %#x\n",(size_t*) e + i, *((size_t*) e + i));
-
-	e();
 }

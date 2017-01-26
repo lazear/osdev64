@@ -56,7 +56,6 @@ void main(void)
 	trap_init();
 	syscall_init();
 	vga_clear();
-	printf("Control transferred to x86_64 kernel\n");
 	dprintf("[init] early kernel boot success!\n");
 
 
@@ -96,17 +95,16 @@ void main(void)
 
 	mmu_init();
 
-	dprintf("[init] probing processor features\n");
+	printf("[init] probing processor features\n");
 	//printf("%dM total physical memory detected\n", phys_mem_detected / 0x100000);
 	printf("x2APIC? %d\n", x2apic_enabled() & (1<<21));
 	printf("SSE4.2? %d\n", sse42_enabled());
 
 	extern size_t _binary__mnt_d_github_osdev64_a_out_start[];
 	extern size_t _binary__mnt_d_github_osdev64_a_out_end[];
-
-	printf("binary %x %x\n", (size_t) &_binary__mnt_d_github_osdev64_a_out_end - (size_t) &_binary__mnt_d_github_osdev64_a_out_start);
-	//extern void elf_objdump(void* data);
+	printf("[init] executing ELF file\n");
 	elf_load((void*) &_binary__mnt_d_github_osdev64_a_out_start);
 
-	for(;;);
+	printf("sys_exit complete, back to kernel\n");
+	halt_catch_fire();
 }

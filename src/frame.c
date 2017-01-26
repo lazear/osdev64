@@ -78,7 +78,6 @@ void page_init(size_t memory, size_t table)
 		mmu[1] = table + (PAGE_SIZE*1);
 		mmu[2] = table + (PAGE_SIZE*2);
 		table += PAGE_SIZE*3;
-		printf("Memory overload - remove RAM and reboot\nAttempting bootstrap to %#x\n", req);
 		mmu_bootstrap(req, (void*)mmu[0], (void*)mmu[1], (void*)mmu[2]);
 
 	}
