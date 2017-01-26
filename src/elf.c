@@ -32,6 +32,7 @@ SOFTWARE.
 #include <elf.h>
 #include <frame.h>
 #include <mmu.h>
+#include <desc.h>
 #include <interrupts.h>
 
 void elf_objdump(void* data) {
@@ -190,8 +191,23 @@ void elf_load(void* data) {
 	}
 	last_phdr--;
 	extern void execat(size_t argc, size_t argv, size_t rip);
+	extern void exec_user(size_t argc, size_t argv, size_t rip, size_t rsp);
+
+	struct page* rsp = mmu_req_page(0xC0000000, 0x7);
+
+	uint16_t* c = 0xC0000000;
+
+	//*c++ = 0x00EB;	/* jmp next instr */
+	//*c++ = 0x03CD; 	/* int 3 */
+	*c++ = 0xFEEB;	/* jmp $ */
+
+	size_t tr;
+	asm volatile("str %0" : "=r"(tr));
+	size_t* tss = (size_t*) ((void*)&system_tss + 24);
+
+	printf("tr %x %x\n", tss, *tss);
 	int i = setjmp(&sys_exit_buf);
 	if (!i)
-		execat(1, NULL, ehdr->e_entry);
-
+		exec_user(1, NULL, 0xC0000000, 0xC0000F00);
+		//execat(1, NULL, ehdr->e_entry);
 }

@@ -100,11 +100,13 @@ void main(void)
 	printf("x2APIC? %d\n", x2apic_enabled() & (1<<21));
 	printf("SSE4.2? %d\n", sse42_enabled());
 
-	extern size_t _binary__mnt_d_github_osdev64_a_out_start[];
-	extern size_t _binary__mnt_d_github_osdev64_a_out_end[];
+	extern size_t _binary__mnt_d_Documents_GitHub_osdev64_a_out_start[];
+	extern size_t _binary__mnt_d_Documents_GitHub_osdev64_a_out_end[];
 	printf("[init] executing ELF file\n");
-	elf_load((void*) &_binary__mnt_d_github_osdev64_a_out_start);
+	elf_load((void*) &_binary__mnt_d_Documents_GitHub_osdev64_a_out_start);
 
 	printf("sys_exit complete, back to kernel\n");
+	// halt_catch_fire();
+
 	halt_catch_fire();
 }

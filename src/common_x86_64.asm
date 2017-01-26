@@ -78,7 +78,6 @@ inb:
 
 ;;; writemsr(rdi = MSR register, rsi = contents)
 writemsr:
-	push rbp
 	mov rax, rsi 
 	mov rdx, rsi 
 	; keep low bits 
@@ -87,7 +86,6 @@ writemsr:
 	shr rdx, 32
 	mov rcx, rdi 
 	wrmsr 
-	pop rbp
 	ret
 
 ;;; readmsr(rdi = MSR register)

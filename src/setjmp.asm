@@ -24,26 +24,6 @@ setjmp:
 
 	ret 
 
-
-sys_exit:
-	; mov r10, rdi
-	; mov r9, rsi
-	; pop rax 
-	; pop rdi
-	; pop rsi 
-	; pop rdx
-	; pop rcx 
-	; pop r11 
-	; pop rbx 
-	; pop rbp
-	; pop r12 
-	; pop r13 
-	; pop r14 
-	; pop r15 
-	; pop rsp
-	; mov rdi, r10 
-	; mov rsi, r9
-	;hlt
 ;;; longjmp(rdi= jmp_buf, rsi= value)
 longjmp:
 	mov rax, rsi 

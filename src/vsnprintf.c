@@ -215,7 +215,7 @@ int printf(const char* fmt, ...)
 	va_start(ap, fmt);
 	r = vsnprintf(buf, 256, fmt, ap);
 	va_end(ap);
-
+	uart_write(buf);
 	vga_puts(buf);
 	return r;
 }

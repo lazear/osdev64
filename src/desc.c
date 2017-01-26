@@ -31,7 +31,13 @@ SOFTWARE.
 #include <desc.h>
 #include <common.h>
 
+/* Interrupt descriptor table */
+struct idt_descriptor idt[256];
 
+/* Task state segment */
+struct tss_64 system_tss;
+
+uint64_t gdt[10] __attribute__((aligned(32)));
 
 void idt_set_gate(int n, int dpl, int type, uint64_t handler) 
 {
@@ -59,15 +65,16 @@ void idt_init(void)
 		idt_set_gate(i, 0, 0xE, (uint64_t) vectors[i]);
 
 	/* Set SYSCALL (0x80) to DPL=3 */
-	idt_set_gate(SYSCALL, 3, 0xF, (uint64_t) vectors[i]);
-
+	idt_set_gate(SYSCALL, 3, 0xF, (uint64_t) vectors[SYSCALL]);
+	idt_set_gate(BREAKPOINT, 3, 0xF, (uint64_t) vectors[BREAKPOINT]);
 	uint8_t idtr[10];
 	*(uint16_t*) idtr = (uint16_t) 0xFFF;
 	*(uint64_t*) ((uint64_t) idtr + 2) = (uint64_t) &idt;
 
-	system_tss.ist[0] = 0xFFFF80000000A000;
-	system_tss.rsp[0] = 0xFFFF80000000A000;
-
+	for (i = 0; i < 3; i++) {
+		system_tss.rsp[i] = 0xFFFF80000000A000;
+		system_tss.ist[i] = 0xFFFF80000000A000;
+	}
 	asm volatile("lidt (%0)" : : "r" ((uint64_t)&idtr));
 
 }
@@ -78,6 +85,7 @@ void gdt_init(void)
 	/* It's easier to just do this by hand than to use structs for 64 bit GDT */
 	memset(gdt, 0, sizeof(gdt));
 	gdt[0] = 0;
+
 	gdt[1] = 0x00209A0000000000; 	/* 0x08 KERNEL_CODE */
 	gdt[2] = 0x0000920000000000; 	/* 0x10 KERNEL_DATA */
 	gdt[3] = 0x0020FA0000000000; 	/* 0x18 USER_CODE */
@@ -88,13 +96,35 @@ void gdt_init(void)
 	 * segment descriptor now takes up 16 bytes, so load it
 	 * into the 6th and 7th entries */
 	uint64_t tss = 0x0000890000000000;
-	tss |= (((uint64_t) &system_tss) & 0xFFFF) << 16;
-	tss |= ((((uint64_t) &system_tss) >> 16) & 0xFF) << 24;
-	tss |= ((((uint64_t) &system_tss) >> 24) & 0xFF) << 56;
+	uint64_t tssa = &system_tss;
+	tss |= (tssa & 0xFFFF) << 16;
+	tss |= ((tssa >> 16) & 0xFF) << 24;
+	tss |= ((tssa >> 24) & 0xFF) << 56;
 	tss |= sizeof(system_tss) - 1;
 
-	gdt[6] = tss;					/* 0x30 KERNEL_TSS */
-	gdt[7] = ((uint64_t) &system_tss) >> 32;
+	struct tss_d {
+		uint16_t seg_low;
+		uint16_t base_low;
+		uint8_t base_mid;
+		uint8_t type;
+		uint8_t limit : 4;
+		uint8_t avl : 4;
+		uint8_t base_top;
+		uint32_t base_high;
+		uint32_t res;
+	} td;
+
+	memset(&td, 0, sizeof(struct tss_d));
+	td.base_high = tssa >> 32;
+	td.base_top = (tssa >> 24 & 0xff);
+	td.base_mid = (tssa >> 16 & 0xff);
+	td.base_low = (tssa & 0xffff);
+	td.type = 0x89;
+	td.avl = 1;
+	td.seg_low = 103;
+
+	gdt[6] = *(size_t*) &td;//tss;					/* 0x30 KERNEL_TSS */
+	gdt[7] = *((size_t*) &td + 1);//tssa >> 32;
 
 	/* 10 byte GDT descriptor */
 	uint8_t gdtr[10];

@@ -47,24 +47,37 @@
 
 [BITS 16]
 [ORG 0x7C00]
+jmp 0:entry
 
+; 0x0000:0x7C00
 entry:
+
 	cli 				; Turn off interrupts
-	in al, 0x92			; enable a20
-	or al, 2
-	out 0x92, al
-	;and dl, 0x80
-	mov [drive], dl
-	mov word [packet.dest], 0x7E00
-	mov word [packet.count], 100
-	call read_disk
-	
-	; Clear ax register, set all segments to zero
 	xor ax, ax
 	mov ds, ax
 	mov es, ax
 	mov fs, ax
 	mov gs, ax
+
+	; Bochs is requires 64K of stack space to read
+	; 128 sectors
+	; God, real mode is dumb
+	mov ax, 0x8c00
+	mov ss, ax
+	mov sp, 0
+
+
+	in al, 0x92			; enable a20
+	or al, 2
+	out 0x92, al
+	;and dl, 0x80
+	mov [drive], dl
+	mov ax, 0
+	int 13h
+	call read_disk
+	
+	; Clear ax register, set all segments to zero
+
 
 	mov di, 0x7000
 	call memory_map
@@ -87,6 +100,7 @@ entry:
 
 
 read_disk:
+	mov ax, 0x07e0
 	mov si, packet		; address of "disk address packet"
 	mov ah, 0x42		; extended read
 	mov dl, [drive]		; drive number 0 (OR the drive # with 0x80)
@@ -100,10 +114,10 @@ packet:
 	db	0x10	; packet size (16 bytes)
 	db	0		; always 0
 .count:		
-	dw	4		; number of sectors to transfer
+	dw	120		; number of sectors to transfer
 .dest:		
 	dw	0		; destination offset (0:7c00)
-	dw	0		; destination segment
+	dw	0x7e0	; destination segment
 .lba:
 	dd	1		; put the lba  to read in this spot
 	dd	0		; more storage bytes only for big lba

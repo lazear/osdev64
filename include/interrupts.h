@@ -5,6 +5,8 @@
 #include <setjmp.h>
 
 #define SYSCALL			0x80 
+#define BREAKPOINT 		3 
+#define PAGEFAULT 		14
 #define IRQ_ZERO		0x20
 #define IRQ_TIMER		0x00
 #define IRQ_KBD			0x01

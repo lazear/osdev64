@@ -64,6 +64,7 @@ static char* exceptions[] = {
 void breakpoint_handler(struct registers* r)
 {
 	printf("Breakpoint RIP %#x RFLAGS %x\n", r->rip, r->flags);
+	printf("cs  %#x ss  %#x\n", r->cs, r->ss);
 	printf("rax %#x rbx %#x\n", r->rax, r->rbx);
 	printf("rcx %#x rdx %#x\n", r->rcx, r->rdx);
 	printf("rsi %#x rdi %#x\n", r->rsi, r->rdi);
@@ -72,6 +73,9 @@ void breakpoint_handler(struct registers* r)
 	printf("r10 %#x r11 %#x\n", r->r10, r->r11);
 	printf("r12 %#x r13 %#x\n", r->r12, r->r13);
 	printf("r14 %#x r15 %#x\n", r->r14, r->r15);
+
+	if (r->rax == 0)
+		halt_catch_fire();
 }
 
 void page_fault(struct registers* r) 
@@ -84,9 +88,6 @@ void page_fault(struct registers* r)
 	printf("Faulting instruction:  %#x (%s)\n", r->rip, (r->cs == 0x23) ? "User process" : "Kernel code");
 	printf("Current stack pointer: %#x\n", r->rsp);
 
-	dprintf("Page Fault(%d): cr2 %#x\n", r->err_no, cr2);
-	dprintf("Faulting instruction:  %#x (%s)\n", r->rip, (r->cs == 0x23) ? "User process" : "Kernel code");
-	dprintf("Current stack pointer: %#x\n", r->rsp);
 
 	if (r->err_no & PRESENT)	printf(" \tPage Not Present\n");
 	if (r->err_no & RW) 		printf(" \tPage Not Writeable\n");
@@ -110,12 +111,12 @@ void trap(struct registers* r)
 {
 	if (handlers[r->int_no]) {
 		handlers[r->int_no](r);
-
 	} else if (r->int_no < IRQ_ZERO) {
 		/* CPU exception without a handler installed */
 		
 		printf("CPU exception: %s\n", exceptions[r->int_no]);
-		printf("RIP %#x RFLAGS %x\n", r->rip, r->flags);
+		printf("rip %#x rflags %x\n", r->rip, r->flags);
+		printf("cs  %x ss  %x\n", r->cs, r->ss);
 		printf("rax %#x rbx %#x\n", r->rax, r->rbx);
 		printf("rcx %#x rdx %#x\n", r->rcx, r->rdx);
 		printf("rsi %#x rdi %#x\n", r->rsi, r->rdi);
@@ -142,6 +143,6 @@ void trap(struct registers* r)
 void trap_init(void)
 {
 	memset(handlers, 0, sizeof(trap_handler)*256);
-	trap_register(3, breakpoint_handler);
-	trap_register(14, page_fault);
+	trap_register(BREAKPOINT, breakpoint_handler);
+	trap_register(PAGEFAULT, page_fault);
 }

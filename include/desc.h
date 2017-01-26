@@ -72,10 +72,10 @@ uint64_t gdt[10] __attribute__((aligned(32)));
 #define GDT_TRAP_GATE 	0xF 
 
 /* Interrupt descriptor table */
-struct idt_descriptor idt[256];
+extern struct idt_descriptor idt[256];
 
 /* Task state segment */
-struct tss_64 system_tss;
+extern struct tss_64 system_tss;
 
 /* Array of interrupt handlers */
 extern uint64_t vectors[256];

@@ -3,8 +3,10 @@
 
 global vectors
 global trap_handler
-extern outb 
+global syscall_entry
+global sysret_entry
 
+extern syscall_handler
 extern trap 
 
 trap_handler:
@@ -53,8 +55,6 @@ trap_handler:
 	add rsp, 16
 	iretq
 
-global syscall_entry
-global sysret_entry
 
 ; Stack pointers for SYSCALL/SYSRET are not specified through model specific registers. The clearing of bits in
 ; RFLAGS is programmable rather than fixed. SYSCALL/SYSRET save and restore the RFLAGS register.
@@ -65,22 +65,6 @@ global sysret_entry
 ; that the value of the IA32_LSTAR MSR is canonical.)
 ; • Stack segment — Computed by adding 8 to the value in IA32_STAR[47:32].
 ; • Flags — The processor sets
-
-; setjmp:
-; 	pop rsi 				; rip is at top of stack 
-; 	xor rax, rax 			; return value
-; 	mov [rdi+0x00], rbx 
-; 	mov [rdi+0x08], rsp		; Post-return rsp
-; 	push rsi 				; Realign stack 
-; 	mov [rdi+0x10], rbp 
-; 	mov [rdi+0x18], r12 
-; 	mov [rdi+0x20], r13 
-; 	mov [rdi+0x28], r14 
-; 	mov [rdi+0x30], r15
-; 	mov [rdi+0x38], rsi 	; rip
-
-; 	ret 
-extern syscall_handler
 syscall_entry:
 	push rsp
 	push r15
@@ -98,15 +82,12 @@ syscall_entry:
 	mov rdi, rsp
 	call syscall_handler
 
-
-
 ; When SYSRET transfers control to 64-bit mode user code using REX.W, the processor gets the privilege level 3
 ; target code segment, instruction pointer, stack segment, and flags as follows:
 ; • Target code segment — Reads a non-NULL selector from IA32_STAR[63:48] + 16.
 ; • Target instruction pointer — Copies the value in RCX into RIP.
 ; • Stack segment — IA32_STAR[63:48] + 8.
 ; • EFLAGS — Loaded from R11.
-
 sysret_entry:
 	pop rax 
 	pop rdi
