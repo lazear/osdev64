@@ -149,10 +149,10 @@ memsetw:
 
 ;;; memcpy(rdi = destination, rsi = source, rdx = count)
 ;;; unoptimized memcpy
-memcpy:
-	mov rcx, rdx 
-	rep movsb
-	ret
+; memcpy:
+; 	mov rcx, rdx 
+; 	rep movsb
+; 	ret
 
 ;;; strncpy(rdi = destination, rsi = source, rdx = length)
 ;;; copy until rdx, or source byte is zero 

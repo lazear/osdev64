@@ -154,6 +154,15 @@ void elf_objdump(void* data) {
 
 // extern void enter_usermode(uint32_t eip, uint32_t esp);
 
+
+void memcpy(void *s1,  void *s2, size_t n) {
+	uint8_t* src = (uint8_t*) s2;
+	uint8_t* dest = (uint8_t*) s1;
+	int i;
+	for (i = 0; i < n; i++)
+		dest[i] = src[i];
+}
+
 void elf_load(void* data) {
 	Elf64_Ehdr * ehdr = (Elf64_Ehdr*) data; 
 
@@ -164,9 +173,13 @@ void elf_load(void* data) {
 
 
 	while(phdr < last_phdr) {
+				if (phdr->p_type != 1) {
+			phdr++;
+			continue;
+		}
 		printf("LOAD:\toff 0x%x\tvaddr\t0x%x\tpaddr\t0x%x\n\t\tfilesz\t%d\tmemsz\t%d\talign\t%x\t\n",
 		 	phdr->p_offset, phdr->p_vaddr, phdr->p_paddr, phdr->p_filesz, phdr->p_memsz, phdr->p_align);
-		
+
 		for (int i = 0; i <= phdr->p_memsz; i += 0x1000) {
 			//if ()
 			struct page* p = mmu_req_page(phdr->p_vaddr + i, 0x7);			// Map that page in KPD
@@ -175,6 +188,7 @@ void elf_load(void* data) {
 		memset(phdr->p_vaddr, 0, phdr->p_memsz);
 		//printf("memcpy: %x, %x, %x\n", phdr->p_vaddr, (size_t)data + phdr->p_offset, phdr->p_filesz);
 		memcpy(phdr->p_vaddr, (size_t)data + phdr->p_offset, phdr->p_filesz);
+		printf("%x\n", *((size_t*) phdr->p_vaddr));
 		//printf("memcpy done\n");
 		phdr++;
 	}
@@ -183,5 +197,8 @@ void elf_load(void* data) {
 
 	printf("Program entry @ %#x\n", ehdr->e_entry);
 	int (*e)() = ehdr->e_entry;
+	for (int i = 0; i < 8; i++)
+		printf("%#x: %#x\n",(size_t*) e + i, *((size_t*) e + i));
+
 	e();
 }
