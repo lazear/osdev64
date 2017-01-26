@@ -56,7 +56,7 @@ entry:
 	;and dl, 0x80
 	mov [drive], dl
 	mov word [packet.dest], 0x7E00
-	mov word [packet.count], 80
+	mov word [packet.count], 100
 	call read_disk
 	
 	; Clear ax register, set all segments to zero

@@ -83,7 +83,7 @@ void page_init(size_t memory, size_t table)
 
 	}
 
-	parray = (void*) table;
+	parray = (void*) P2V(table);
 	/* Initialize all pages in system 
 	 * Don't add to free list yet... wait until we are told to do so explicitly */
 	for (i = 0; i < numpages; i++) {

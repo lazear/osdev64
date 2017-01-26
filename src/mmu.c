@@ -46,9 +46,9 @@ void mmu_bootstrap(size_t physical, size_t* pml4, size_t* pdpt, size_t* pd)
 	dprintf("[mmu ] bootstrap %#x\n", physical);	
 	int i;
 
-	pml4[PML4E(0)] 				= ((size_t) pdpt) | (PRESENT | RW);
+	//pml4[PML4E(0)] 				= ((size_t) pdpt) | (PRESENT | RW);
 	pml4[PML4E(KERNEL_VIRT)] 	= ((size_t) pdpt) | (PRESENT | RW);
-	pdpt[PDPTE(0)] 				= ((size_t) pd) | (PRESENT | RW);
+	pdpt[PDPTE(KERNEL_VIRT)] 	= ((size_t) pd) | (PRESENT | RW);
 	for (i = 0; i < physical; i += 0x00200000) {
 		pd[PDE(i)] = i | (PRESENT | RW | PS);
 	}
@@ -88,6 +88,55 @@ void mmu_map2mb(size_t physical, size_t address, int flags)
 	}
 
 	pd[PDE(address)] = (physical | flags) | PS;
+}
+
+struct page* mmu_req_page(uint64_t address, int flags)
+{
+	size_t* pml4 = PML4->data;
+	size_t* pdpt = NULL;
+	size_t* pd = NULL;
+	size_t* pt = NULL;
+	size_t phys;
+	dprintf("[mmu ] mapping requested for %#x (%x)\n", address, flags);
+	if (pml4[PML4E(address)] & PRESENT) {
+		pdpt = (size_t*) ROUND_DOWN(pml4[PML4E(address)], PAGE_SIZE);
+	} else {
+		struct page* p = page_alloc();
+		pdpt = (size_t*) p->address;
+		pml4[PML4E(address)] = ((size_t) pd) | (PRESENT | RW);
+	}
+
+	/* Check for existing page directory */
+	if (pdpt[PDPTE(address)] & PRESENT) {
+		if (pdpt[PDPTE(address)] & PS) {
+			/* Map a 1GB page */
+		}
+		pd = (size_t*) ROUND_DOWN(pdpt[PDPTE(address)], PAGE_SIZE);
+	} else {
+		struct page* p = page_alloc();
+		pd = (size_t*) p->address;
+		pdpt[PDPTE(address)] = ((size_t) pd) | (PRESENT | RW);
+	}
+
+	if (pd[PDE(address)] & PRESENT) {
+		if (pd[PDE(address)] & PS) {
+			/* Map a 2MB page */
+		}
+		pt = (size_t*) ROUND_DOWN(pd[PDE(address)], PAGE_SIZE);
+	} else {
+		struct page* p = page_alloc();
+		pt = (size_t*) p->address;
+		pd[PDE(address)] = ((size_t) pd) | (PRESENT | RW);
+	}
+	
+	struct page* p = page_alloc();
+	if (!p)
+		return p;
+	dprintf("[mmu ] mapped %#x to phys %#x\n", address, p->address);
+	pt[PTE(address)] = (p->address | flags);
+
+	p->data = address;
+	return p;
 }
 
 void mmu_map(uint64_t address)

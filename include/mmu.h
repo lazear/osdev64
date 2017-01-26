@@ -21,5 +21,6 @@ extern void mmu_init(void);
 extern void mmu_bootstrap(size_t physical, size_t* pml4, size_t* pdpt, size_t* pd);
 extern void mmu_map2mb(size_t physical, size_t address, int flags);
 extern void mmu_map(uint64_t address);
+extern struct page* mmu_req_page(uint64_t address, int flags);
 
 #endif

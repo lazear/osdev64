@@ -101,5 +101,12 @@ void main(void)
 	printf("x2APIC? %d\n", x2apic_enabled() & (1<<21));
 	printf("SSE4.2? %d\n", sse42_enabled());
 
+	extern size_t _binary__mnt_d_github_osdev64_a_out_start[];
+	extern size_t _binary__mnt_d_github_osdev64_a_out_end[];
+
+	printf("binary %x %x\n", (size_t) &_binary__mnt_d_github_osdev64_a_out_end - (size_t) &_binary__mnt_d_github_osdev64_a_out_start);
+	//extern void elf_objdump(void* data);
+	//elf_load((void*) &_binary__mnt_d_github_osdev64_a_out_start);
+
 	for(;;);
 }

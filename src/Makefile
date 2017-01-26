@@ -27,7 +27,7 @@ default: all
 	@$(AS) $(ASFLAGS) $< -o $@
 
 $(FINAL): $(OBJECTS) 
-	$(LD) $(LDFLAGS) $(OBJECTS) -o $(FINAL)
+	$(LD) $(LDFLAGS) $(OBJECTS) -b binary $(EXE) -o $(FINAL)
 
 all: $(FINAL)
 	@make -s -C ./boot	

@@ -3,6 +3,7 @@
 export FINAL = $(shell pwd)/bin/kernel
 export INCLUDE = $(shell pwd)/include/
 export DISK = $(shell pwd)/disk
+export EXE = $(shell pwd)/a.out
 
 RAM = 256
 
