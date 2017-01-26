@@ -152,6 +152,7 @@ memsetw:
 memcpy:
 	mov rcx, rdx 
 	rep movsb
+	ret
 
 ;;; strncpy(rdi = destination, rsi = source, rdx = length)
 ;;; copy until rdx, or source byte is zero 

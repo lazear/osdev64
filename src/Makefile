@@ -30,6 +30,7 @@ $(FINAL): $(OBJECTS)
 	$(LD) $(LDFLAGS) $(OBJECTS) -b binary $(EXE) -o $(FINAL)
 
 all: $(FINAL)
+	@echo $(CSOURCE) $(ASOURCE) $(HEADERS) | xargs wc -l | grep total
 	@make -s -C ./boot	
 	@dd if=$(FINAL) of=$(DISK) bs=1k seek=1 conv=notrunc
 

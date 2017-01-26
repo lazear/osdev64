@@ -6,6 +6,7 @@
 
 void syscall(struct registers* r)
 {
+	printf("SYSCALL\n");
 	for(;;);	
 }
 

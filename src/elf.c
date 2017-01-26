@@ -30,7 +30,8 @@ SOFTWARE.
 #include <common.h>
 #include <assert.h>
 #include <elf.h>
-
+#include <frame.h>
+#include <mmu.h>
 
 void elf_objdump(void* data) {
 	Elf64_Ehdr *ehdr = (Elf64_Ehdr*) data;
@@ -163,17 +164,18 @@ void elf_load(void* data) {
 
 
 	while(phdr < last_phdr) {
-		printf("LOAD:\toff 0x%x\tvaddr\t0x%x\tpaddr\t0x%x\n\t\tfilesz\t%d\tmemsz\t%d\talign\t%d\t\n",
+		printf("LOAD:\toff 0x%x\tvaddr\t0x%x\tpaddr\t0x%x\n\t\tfilesz\t%d\tmemsz\t%d\talign\t%x\t\n",
 		 	phdr->p_offset, phdr->p_vaddr, phdr->p_paddr, phdr->p_filesz, phdr->p_memsz, phdr->p_align);
 		
 		for (int i = 0; i <= phdr->p_memsz; i += 0x1000) {
 			//if ()
-			mmu_req_page(phdr->p_vaddr + i, 0x7);			// Map that page in KPD
-			//printf("Mapped %x->%x\n", phys, phdr->p_vaddr + i);
+			struct page* p = mmu_req_page(phdr->p_vaddr + i, 0x7);			// Map that page in KPD
+			//printf("Mapped %x->%x\n", p->address, phdr->p_vaddr + i);
 		}
 		memset(phdr->p_vaddr, 0, phdr->p_memsz);
+		//printf("memcpy: %x, %x, %x\n", phdr->p_vaddr, (size_t)data + phdr->p_offset, phdr->p_filesz);
 		memcpy(phdr->p_vaddr, (size_t)data + phdr->p_offset, phdr->p_filesz);
-	
+		//printf("memcpy done\n");
 		phdr++;
 	}
 	last_phdr--;
@@ -181,5 +183,5 @@ void elf_load(void* data) {
 
 	printf("Program entry @ %#x\n", ehdr->e_entry);
 	int (*e)() = ehdr->e_entry;
-
+	e();
 }
