@@ -20,7 +20,7 @@ void mmu_init(void)
 
 	PML4 = page_request(cr3);
 	assert(PML4);
-	PML4->data = (void*) cr3;
+	PML4->data = (void*) P2V(cr3);
 	PML4->flags = P_USED | P_IMMUTABLE | P_KERNEL | P_VIRT;
 	list_del(&PML4->pages);
 	list_del(&PML4->lru);
@@ -102,7 +102,8 @@ struct page* mmu_req_page(uint64_t address, int flags)
 		pdpt = (size_t*) ROUND_DOWN(pml4[PML4E(address)], PAGE_SIZE);
 	} else {
 		struct page* p = page_alloc();
-		pdpt = (size_t*) p->address;
+		dprintf("[mmu ] allocating page %#x for new PDPT\n", p->address);
+		pdpt = (size_t*) P2V(p->address);
 		pml4[PML4E(address)] = ((size_t) pd) | (PRESENT | RW);
 	}
 
@@ -114,7 +115,8 @@ struct page* mmu_req_page(uint64_t address, int flags)
 		pd = (size_t*) ROUND_DOWN(pdpt[PDPTE(address)], PAGE_SIZE);
 	} else {
 		struct page* p = page_alloc();
-		pd = (size_t*) p->address;
+		dprintf("[mmu ] allocating page %#x for new PD\n", p->address);
+		pd = (size_t*) P2V(p->address);
 		pdpt[PDPTE(address)] = ((size_t) pd) | (PRESENT | RW);
 	}
 
@@ -125,7 +127,8 @@ struct page* mmu_req_page(uint64_t address, int flags)
 		pt = (size_t*) ROUND_DOWN(pd[PDE(address)], PAGE_SIZE);
 	} else {
 		struct page* p = page_alloc();
-		pt = (size_t*) p->address;
+		dprintf("[mmu ] allocating page %#x for new PT\n", p->address);
+		pt = (size_t*) P2V(p->address);
 		pd[PDE(address)] = ((size_t) pd) | (PRESENT | RW);
 	}
 	

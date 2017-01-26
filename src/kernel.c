@@ -62,8 +62,8 @@ void main(void)
 
 	dprintf("[init] parsing memory map\n");
 	/* Parse memory map */
-	uint8_t memlen = *(uint8_t*) 0x6FF0 / sizeof(struct memory_map);
-	struct memory_map* mmap = (struct memory_map*) 0x7000;
+	uint8_t memlen = *(uint8_t*) P2V(0x6FF0) / sizeof(struct memory_map);
+	struct memory_map* mmap = (struct memory_map*) P2V(0x7000);
 	struct memory_map* mmax = mmap + memlen;
 	
 	size_t highest_addr = 0;
@@ -78,7 +78,7 @@ void main(void)
 	}
 	page_init(highest_addr, V2P(KERNEL_END));
 
-	mmap = (struct memory_map*) 0x7000;
+	mmap = (struct memory_map*) P2V(0x7000);
 	while (mmap < mmax) {
 		if (mmap->base+mmap->len <= highest_addr) {
 			if ((mmap->type & 0xF) == 1) {
@@ -106,7 +106,7 @@ void main(void)
 
 	printf("binary %x %x\n", (size_t) &_binary__mnt_d_github_osdev64_a_out_end - (size_t) &_binary__mnt_d_github_osdev64_a_out_start);
 	//extern void elf_objdump(void* data);
-	//elf_load((void*) &_binary__mnt_d_github_osdev64_a_out_start);
+	elf_load((void*) &_binary__mnt_d_github_osdev64_a_out_start);
 
 	for(;;);
 }
