@@ -1,9 +1,11 @@
 #include <interrupts.h>
+
 #include <common.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <setjmp.h>
 #include <msr.h>
+#include <stdio.h>
 
 struct jmp_buf sys_exit_buf;
 
@@ -13,17 +15,14 @@ extern void sys_exit(struct jmp_buf*, uint64_t val);
 void syscall_handler(struct syscall* r)
 {
 	printf("SYSCALL %d\n", r->rax);
-		
-	//for (;;);
+
 	if (r->rax == 1)
 		printf("sys_write: %s\n", r->rsi);
 
 	if (r->rax == 60) {
 		printf("sys_exit\n");
-		int i;
+		longjmp(&sys_exit_buf, r->rip);
 
-		longjmp(&sys_exit_buf, 1);
-		exit();
 	}
 }
 

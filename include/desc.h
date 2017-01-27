@@ -22,6 +22,17 @@ struct tss_64 {
 	uint16_t io_map_base;
 } __attribute__((packed));
 
+struct tss_descriptor {
+	uint16_t seg_low;
+	uint16_t base_low;
+	uint8_t base_mid;
+	uint8_t type;
+	uint8_t limit : 4;
+	uint8_t avl : 4;
+	uint8_t base_top;
+	uint32_t base_high;
+	uint32_t res;
+}__attribute__((packed));
 
 struct idt_descriptor {
 	uint16_t offset_low;

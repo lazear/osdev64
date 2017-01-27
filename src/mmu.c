@@ -49,6 +49,11 @@ void mmu_bootstrap(size_t physical, size_t* pml4, size_t* pdpt, size_t* pd)
 	//pml4[PML4E(0)] 				= ((size_t) pdpt) | (PRESENT | RW);
 	pml4[PML4E(KERNEL_VIRT)] 	= ((size_t) pdpt) | (PRESENT | RW);
 	pdpt[PDPTE(KERNEL_VIRT)] 	= ((size_t) pd) | (PRESENT | RW);
+
+
+	pml4[0x1FF] = (size_t) pml4 | (PRESENT | RW);
+	pdpt[0x1FF] = (size_t) pdpt | (PRESENT | RW);
+	pd[0x1FF] =(size_t) pd | (PRESENT | RW);
 	for (i = 0; i < physical; i += 0x00200000) {
 		pd[PDE(i)] = i | (PRESENT | RW | PS);
 	}

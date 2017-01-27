@@ -100,13 +100,31 @@ void main(void)
 	printf("x2APIC? %d\n", x2apic_enabled() & (1<<21));
 	printf("SSE4.2? %d\n", sse42_enabled());
 
-	extern size_t _binary__mnt_d_Documents_GitHub_osdev64_a_out_start[];
-	extern size_t _binary__mnt_d_Documents_GitHub_osdev64_a_out_end[];
-	printf("[init] executing ELF file\n");
-	elf_load((void*) &_binary__mnt_d_Documents_GitHub_osdev64_a_out_start);
+	// extern size_t _binary__mnt_d_Documents_GitHub_osdev64_a_out_start[];
+	// extern size_t _binary__mnt_d_Documents_GitHub_osdev64_a_out_end[];
+	// printf("[init] executing ELF file\n");
+	// elf_load((void*) &_binary__mnt_d_Documents_GitHub_osdev64_a_out_start);
 
-	printf("sys_exit complete, back to kernel\n");
+	// printf("sys_exit complete, back to kernel\n");
 	// halt_catch_fire();
+
+	// struct page* rsp = mmu_req_page(0xC0000000, 0x7);
+
+	// uint16_t* c = 0xC0000000;
+
+	// //*c++ = 0x00EB;	/* jmp next instr */
+	// //*c++ = 0x03CD; 	/* int 3 */
+	// *c++ = 0xFEEB;	/* jmp $ */
+
+	// size_t tr;
+	// asm volatile("str %0" : "=r"(tr));
+	// size_t* tss = (size_t*) ((void*)&system_tss + 24);
+
+	// printf("tr %x %x\n", tss, *tss);
+	// int i = setjmp(&sys_exit_buf);
+	// if (!i)
+	// 	exec_user(1, NULL, 0xC0000000, 0xC0000F00);
+
 
 	halt_catch_fire();
 }

@@ -81,9 +81,12 @@ void idt_init(void)
 
 void gdt_init(void)
 {
-
-	/* It's easier to just do this by hand than to use structs for 64 bit GDT */
+	struct tss_descriptor tss;
+	uint64_t tptr = (uint64_t) &system_tss;
+	memset(&tss, 0, 16);
 	memset(gdt, 0, sizeof(gdt));
+	/* It's easier to just do this by hand than to use structs for 64 bit GDT */
+
 	gdt[0] = 0;
 
 	gdt[1] = 0x00209A0000000000; 	/* 0x08 KERNEL_CODE */
@@ -92,39 +95,20 @@ void gdt_init(void)
 	gdt[4] = 0x0000F20000000000; 	/* 0x20 USER_DATA */
 	gdt[5] = 0x0000920000000000; 	/* 0x28 KERNEL_CPU */
 
+	tss.base_high = tptr >> 32;
+	tss.base_top = (tptr >> 24 & 0xff);
+	tss.base_mid = (tptr >> 16 & 0xff);
+	tss.base_low = (tptr & 0xffff);
+	tss.type = 0x89;
+	tss.avl = 1;
+	tss.seg_low =103;
+
 	/* According to the Intel manuals, the 64 bit TSS 
 	 * segment descriptor now takes up 16 bytes, so load it
 	 * into the 6th and 7th entries */
-	uint64_t tss = 0x0000890000000000;
-	uint64_t tssa = &system_tss;
-	tss |= (tssa & 0xFFFF) << 16;
-	tss |= ((tssa >> 16) & 0xFF) << 24;
-	tss |= ((tssa >> 24) & 0xFF) << 56;
-	tss |= sizeof(system_tss) - 1;
 
-	struct tss_d {
-		uint16_t seg_low;
-		uint16_t base_low;
-		uint8_t base_mid;
-		uint8_t type;
-		uint8_t limit : 4;
-		uint8_t avl : 4;
-		uint8_t base_top;
-		uint32_t base_high;
-		uint32_t res;
-	} td;
-
-	memset(&td, 0, sizeof(struct tss_d));
-	td.base_high = tssa >> 32;
-	td.base_top = (tssa >> 24 & 0xff);
-	td.base_mid = (tssa >> 16 & 0xff);
-	td.base_low = (tssa & 0xffff);
-	td.type = 0x89;
-	td.avl = 1;
-	td.seg_low = 103;
-
-	gdt[6] = *(size_t*) &td;//tss;					/* 0x30 KERNEL_TSS */
-	gdt[7] = *((size_t*) &td + 1);//tssa >> 32;
+	gdt[6] = *(size_t*) &tss;				/* 0x30 KERNEL_TSS */
+	gdt[7] = *((size_t*) &tss + 1);
 
 	/* 10 byte GDT descriptor */
 	uint8_t gdtr[10];

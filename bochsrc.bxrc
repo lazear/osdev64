@@ -19,7 +19,7 @@ ata2: enabled=0
 ata3: enabled=0
 pci: enabled=1, chipset=i440fx
 vga: extension=vbe, update_freq=5, realtime=1
-cpu: count=1, ips=4000000, model=corei7_sandy_bridge_2600k, reset_on_triple_fault=1, cpuid_limit_winnt=0, ignore_bad_msrs=1, mwait_is_nop=0
+cpu: count=1, ips=4000000, model=corei7_sandy_bridge_2600k, reset_on_triple_fault=0, cpuid_limit_winnt=0, ignore_bad_msrs=1, mwait_is_nop=0
 print_timestamps: enabled=0
 port_e9_hack: enabled=0
 private_colormap: enabled=0

@@ -195,19 +195,8 @@ void elf_load(void* data) {
 
 	struct page* rsp = mmu_req_page(0xC0000000, 0x7);
 
-	uint16_t* c = 0xC0000000;
-
-	//*c++ = 0x00EB;	/* jmp next instr */
-	//*c++ = 0x03CD; 	/* int 3 */
-	*c++ = 0xFEEB;	/* jmp $ */
-
-	size_t tr;
-	asm volatile("str %0" : "=r"(tr));
-	size_t* tss = (size_t*) ((void*)&system_tss + 24);
-
-	printf("tr %x %x\n", tss, *tss);
 	int i = setjmp(&sys_exit_buf);
 	if (!i)
-		exec_user(1, NULL, 0xC0000000, 0xC0000F00);
+		exec_user(1, NULL, 0xC0000000, 0xC000F000);
 		//execat(1, NULL, ehdr->e_entry);
 }
