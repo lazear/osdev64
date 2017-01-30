@@ -47,6 +47,7 @@ struct memory_map
 };
 
 extern void mmu_map1gb(size_t physical, size_t address, int flags);
+extern size_t mmu_get_addr(size_t virt);
 
 void main(void)
 {
@@ -99,6 +100,8 @@ void main(void)
 	//printf("%dM total physical memory detected\n", phys_mem_detected / 0x100000);
 	printf("x2APIC? %d\n", x2apic_enabled() & (1<<21));
 	printf("SSE4.2? %d\n", sse42_enabled());
+	struct page* rsp = mmu_req_page(0xC0000000, 0x7);
+	printf("phys: %x\n", mmu_get_addr(0xC0000000));
 
 	// extern size_t _binary__mnt_d_Documents_GitHub_osdev64_a_out_start[];
 	// extern size_t _binary__mnt_d_Documents_GitHub_osdev64_a_out_end[];
@@ -108,7 +111,7 @@ void main(void)
 	// printf("sys_exit complete, back to kernel\n");
 	// halt_catch_fire();
 
-	// struct page* rsp = mmu_req_page(0xC0000000, 0x7);
+
 
 	// uint16_t* c = 0xC0000000;
 
