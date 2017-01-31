@@ -24,12 +24,12 @@ SOFTWARE.
 ===============================================================================
 */
 
-#include <interrupts.h>
-#include <desc.h>
-#include <common.h>
+#include <arch/x86_64/interrupts.h>
+#include <arch/x86_64/desc.h>
+#include <arch/x86_64/kernel.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <mmu.h>
+#include <arch/x86_64/mmu.h>
 
 extern void halt_catch_fire(void);
 

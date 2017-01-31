@@ -20,7 +20,7 @@
 ; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ; SOFTWARE.
 
-; Common library in x86_64 assembly. Functions are defined in include/common.h
+; Common library in x86_64 assembly. Functions are defined in include/arch/x86_64/kernel.h
 ; SysV x86_64 ABI:
 ; First 6 parameters are passed in rdi, rsi, rdx, rcx, r8, and r9.
 ; Additional parameters are pushed onto the stack
@@ -147,10 +147,10 @@ memsetw:
 
 ;;; memcpy(rdi = destination, rsi = source, rdx = count)
 ;;; unoptimized memcpy
-; memcpy:
-; 	mov rcx, rdx 
-; 	rep movsb
-; 	ret
+memcpy:
+	mov rcx, rdx 
+	rep movsb
+	ret
 
 ;;; strncpy(rdi = destination, rsi = source, rdx = length)
 ;;; copy until rdx, or source byte is zero 

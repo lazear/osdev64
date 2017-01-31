@@ -27,20 +27,17 @@ SOFTWARE.
 #include <stdint.h>
 #include <stddef.h>
 #include <stdio.h>
-#include <common.h>
+#include <arch/x86_64/kernel.h>
 #include <assert.h>
-#include <elf.h>
+#include <arch/x86_64/elf.h>
 #include <frame.h>
-#include <mmu.h>
-#include <desc.h>
-#include <interrupts.h>
+#include <arch/x86_64/mmu.h>
+#include <arch/x86_64/desc.h>
+#include <arch/x86_64/interrupts.h>
 
 void elf_objdump(void* data) {
 	Elf64_Ehdr *ehdr = (Elf64_Ehdr*) data;
 
-	/* Make sure the file ain't fucked */
-	// assert(ehdr->e_ident[0] == ELF_MAGIC);
-	// assert(ehdr->e_machine 	== EM_386);
 
 	char *types[] = { "NONE", "RELOCATABLE", "EXECUTABLE", "SHARED", "CORE"};
 
@@ -55,8 +52,8 @@ void elf_objdump(void* data) {
 	
 
 	/* Parse the program headers */
-	Elf64_Phdr* phdr 		= (size_t) data + ehdr->e_phoff;
-	Elf64_Phdr* last_phdr 	= (size_t) phdr + (ehdr->e_phentsize * ehdr->e_phnum);
+	Elf64_Phdr* phdr 		= (Elf64_Phdr*) data + ehdr->e_phoff;
+	Elf64_Phdr* last_phdr 	= (Elf64_Phdr*) phdr + (ehdr->e_phentsize * ehdr->e_phnum);
 	while(phdr < last_phdr) {
 		printf("LOAD:\toff 0x%x\tvaddr\t0x%x\tpaddr\t0x%x\n\t\tfilesz\t%d\tmemsz\t%d\talign\t%d\t\n",
 		 	phdr->p_offset, phdr->p_vaddr, phdr->p_paddr, phdr->p_filesz, phdr->p_memsz, phdr->p_align);
@@ -144,59 +141,33 @@ void elf_objdump(void* data) {
 }
 
 
-
-// struct elf_executable {
-// 	uint32_t* pd;	/* page directory */
-// 	struct _proc_mmap* m;
-// 	elf32_ehdr* ehdr;
-// 	uint32_t esp;
-// 	uint32_t eip;
-// 	void (*execute)(struct elf_executable*);
-// };
-
-// extern void enter_usermode(uint32_t eip, uint32_t esp);
-
-
-void memcpy(void *s1,  void *s2, size_t n) {
+/*void memcpy(void *s1,  void *s2, size_t n) {
 	uint8_t* src = (uint8_t*) s2;
 	uint8_t* dest = (uint8_t*) s1;
 	int i;
 	for (i = 0; i < n; i++)
 		dest[i] = src[i];
-}
+}*/
 
 void elf_load(void* data) {
 	Elf64_Ehdr * ehdr = (Elf64_Ehdr*) data; 
 
 	Elf64_Phdr* phdr 		= (void*) ((size_t) data + ehdr->e_phoff);
 	Elf64_Phdr* last_phdr 	= (void*) ((size_t) phdr + (ehdr->e_phentsize * ehdr->e_phnum));
-	size_t off = (phdr->p_vaddr - phdr->p_paddr);
-
-
 	while(phdr < last_phdr) {
 				if (phdr->p_type != 1) {
 			phdr++;
 			continue;
 		}
-		
-		/*printf("LOAD:\toff 0x%x\tvaddr\t0x%x\tpaddr\t0x%x\n\t\tfilesz\t%d\tmemsz\t%d\talign\t%x\t\n",
-		 	phdr->p_offset, phdr->p_vaddr, phdr->p_paddr, phdr->p_filesz, phdr->p_memsz, phdr->p_align);
-		*/
+	
 		for (int i = 0; i <= phdr->p_memsz; i += 0x1000) {
-			struct page* p = mmu_req_page(phdr->p_vaddr + i, 0x7);
+			struct page* p = mmu_req_page(phdr->p_vaddr + i, PRESENT|RW|USER);
+			if ((size_t) p->data != ROUND_DOWN((phdr->p_vaddr + i), PAGE_SIZE))
+				break;
 		}
-		memset(phdr->p_vaddr, 0, phdr->p_memsz);
-		memcpy(phdr->p_vaddr, (size_t)data + phdr->p_offset, phdr->p_filesz);
+		memset((void*) phdr->p_vaddr, 0, phdr->p_memsz);
+		memcpy((void*) phdr->p_vaddr, (void*) (data + phdr->p_offset), phdr->p_filesz);
 		phdr++;
 	}
 	last_phdr--;
-	extern void execat(size_t argc, size_t argv, size_t rip);
-	extern void exec_user(size_t argc, size_t argv, size_t rip, size_t rsp);
-
-	struct page* rsp = mmu_req_page(0xC0000000, 0x7);
-
-	int i = setjmp(&sys_exit_buf);
-	if (!i)
-		exec_user(1, NULL, 0xC0000000, 0xC000F000);
-		//execat(1, NULL, ehdr->e_entry);
 }

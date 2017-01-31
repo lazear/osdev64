@@ -26,15 +26,15 @@ SOFTWARE.
 
 #include <stdint.h>
 #include <stddef.h>
-#include <common.h>
-#include <interrupts.h>
+#include <arch/x86_64/kernel.h>
+#include <arch/x86_64/interrupts.h>
 #include <frame.h>
-#include <mmu.h>
-#include <desc.h>
+#include <arch/x86_64/mmu.h>
+#include <arch/x86_64/desc.h>
 #include <stdio.h>
 #include <vga.h>
 #include <sse.h>
-
+#include <acpi.h>
 
 extern int x2apic_enabled(void);
 extern int printf(const char* fmt, ...);
@@ -57,10 +57,10 @@ void main(void)
 	trap_init();
 	syscall_init();
 	vga_clear();
-	dprintf("[init] early kernel boot success!\n");
+	kernel_log("[init] early kernel boot success!\n");
 
 
-	dprintf("[init] parsing memory map\n");
+	kernel_log("[init] parsing memory map\n");
 	/* Parse memory map */
 	uint8_t memlen = *(uint8_t*) P2V(0x6FF0) / sizeof(struct memory_map);
 	struct memory_map* mmap = (struct memory_map*) P2V(0x7000);
@@ -70,7 +70,7 @@ void main(void)
 	while (mmap < mmax) {
 		size_t start = mmap->base;
 		size_t end = mmap->base+mmap->len;
-		dprintf("[init] %8s memory detected %#x - %#x\n",(mmap->type & 0xF) == 1 ? "Usable" : "Reserved", start, end);
+		kernel_log("[init] %8s memory detected %#x - %#x\n",(mmap->type & 0xF) == 1 ? "Usable" : "Reserved", start, end);
 		if ((mmap->type & 0xF) == 1) {
 			highest_addr = mmap->len + mmap->base;
 		}
@@ -101,8 +101,8 @@ void main(void)
 	printf("x2APIC? %d\n", x2apic_enabled() & (1<<21));
 	printf("SSE4.2? %d\n", sse42_enabled());
 	struct page* rsp = mmu_req_page(0xC0000000, 0x7);
-	printf("phys: %x\n", mmu_get_addr(0xC0000000));
-
+	printf("ret: %x\n", rsp->address);
+	printf("%d processors detected\n", acpi_init());
 	// extern size_t _binary__mnt_d_Documents_GitHub_osdev64_a_out_start[];
 	// extern size_t _binary__mnt_d_Documents_GitHub_osdev64_a_out_end[];
 	// printf("[init] executing ELF file\n");

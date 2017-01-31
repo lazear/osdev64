@@ -31,9 +31,9 @@ SOFTWARE.
 #include <stdio.h>
 #include <list.h>
 #include <lock.h>
-#include <common.h>
+#include <arch/x86_64/kernel.h>
 #include <frame.h>
-#include <mmu.h>
+#include <arch/x86_64/mmu.h>
 
 static struct lock page_lock;
 
@@ -107,8 +107,8 @@ void page_init(size_t memory, size_t table)
 	}
 	lock_init(&page_lock);
 
-	dprintf("[phys] %d pages in system, %#x highest address\n", numpages, memory);
-	dprintf("[phys] marked pages from %#x to %#x as %x\n", 
+	kernel_log("[phys] %d pages in system, %#x highest address\n", numpages, memory);
+	kernel_log("[phys] marked pages from %#x to %#x as %x\n", 
 		(ROUND_DOWN(table, PAGE_SIZE)), 
 		(ROUND_DOWN(table, PAGE_SIZE)+r*PAGE_SIZE),
 		P_IMMUTABLE | P_PHYS | P_KERNEL);
@@ -159,7 +159,7 @@ int page_mark_range(size_t start, size_t end, int flags)
 			num_free_pages++;
 		}		
 	}
-	dprintf("[phys] marked pages from %#x to %#x as %x\n", start, end, flags);
+	kernel_log("[phys] marked pages from %#x to %#x as %x\n", start, end, flags);
 	lock_release(&page_lock);
 	return 0;
 }
@@ -200,7 +200,7 @@ void page_free(struct page* p)
 	num_used_pages--;
 	num_free_pages++;
 	lock_release(&page_lock);
-	dprintf("[phys] freeing page %#x\n", p->address);
+	kernel_log("[phys] freeing page %#x\n", p->address);
 }
 
 /**
@@ -209,7 +209,8 @@ void page_free(struct page* p)
 struct page* page_request(size_t address)
 {
 	size_t index = ROUND_DOWN(address, PAGE_SIZE) / PAGE_SIZE;
-	assert(index <= numpages);
+	if (index > numpages)
+		return NULL;
 	return &parray[index];
 }
 
@@ -241,7 +242,7 @@ void page_test(void)
 	for (i = 0; i < 1024; i++) {
 		struct page* p = page_alloc();
 		assert(p);
-		//	dprintf("got page %#x\n", p->address);
+		//	kernel_log("got page %#x\n", p->address);
 	}
 
 	page_stats();

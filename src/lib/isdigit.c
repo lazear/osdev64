@@ -1,8 +1,7 @@
 /*
-uart.c
 ===============================================================================
 MIT License
-Copyright (c) Michael Lazear 2016-2017 
+Copyright (c) 2016-2017 Michael Lazear
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -24,36 +23,9 @@ SOFTWARE.
 ===============================================================================
 */
 
-#include <stdint.h>
-#include <arch/x86_64/kernel.h>
-#include <drivers/uart.h>
-#include <lock.h>
+#include <ctype.h>
 
-static struct lock lock;
-
-void uart_init() 
+int isdigit(int c)
 {
-	outb(COM1 + 1, 0x00);	/* Int enable register, disable interupts */
-	outb(COM1 + 3, 0x80);	/* Enable baud rate divisor */
-	outb(COM1 + 0, 0x03);	/* Data register, divide by 3. (1152000 / 3 = 38400 baud) */
-	outb(COM1 + 1, 0x00);	/* hi-byte */
-	outb(COM1 + 3, 0x03);	/* Lock divisor, 8 data bits, no parity */
-	outb(COM1 + 2, 0xC7);	/* Enable FIFO, clear them, 14-byte threshold */
-	outb(COM1 + 4, 0x00);	/* Interrupts disabled */
-}
-
-void uart_putc(char c) 
-{
-	while((inb(COM1 + 5) & 0x20) == 0);
-	outb(COM1, c);
-}
-
-void uart_write(const char* c) 
-{
-	lock_acquire(&lock);
-	while(*c) {
-		uart_putc(*c);
-		c++;
-	}
-	lock_release(&lock);
+	return ((c >= '0') && (c <= '9'));
 }

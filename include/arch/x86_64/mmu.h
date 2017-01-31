@@ -22,5 +22,7 @@ extern void mmu_bootstrap(size_t physical, size_t* pml4, size_t* pdpt, size_t* p
 extern void mmu_map2mb(size_t physical, size_t address, int flags);
 extern void mmu_map(uint64_t address);
 extern struct page* mmu_req_page(uint64_t address, int flags);
+void mmu_map_page(struct page* frame, size_t virtual, int flags);
+size_t get_cr3(void);
 
 #endif

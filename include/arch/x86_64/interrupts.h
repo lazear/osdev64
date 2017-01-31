@@ -1,8 +1,8 @@
 #ifndef __INTERRUPTS__
 #define __INTERRUPTS__
 
-#include <desc.h>
-#include <setjmp.h>
+#include <arch/x86_64/desc.h>
+#include <arch/x86_64/setjmp.h>
 
 #define SYSCALL			0x80 
 #define BREAKPOINT 		3 
@@ -15,24 +15,7 @@
 #define IRQ_ERROR		0x13
 #define IRQ_SPURIOUS	0xDF
 
-struct syscall {
-	uint64_t rax;
-	uint64_t rdi;
-	uint64_t rsi;
-	uint64_t rdx;
-	uint64_t rip;
-	uint64_t rflags;
-	uint64_t rbx;
-	uint64_t rbp;
-	uint64_t r12;
-	uint64_t r13;
-	uint64_t r14;
-	uint64_t r15;
-	uint64_t rsp;
-};
-
 extern struct jmp_buf sys_exit_buf;
-
 
 typedef void (*trap_handler) (struct registers* r);
 extern void trap_init(void);

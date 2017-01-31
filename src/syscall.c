@@ -1,10 +1,10 @@
-#include <interrupts.h>
+#include <arch/x86_64/interrupts.h>
 
-#include <common.h>
+#include <arch/x86_64/kernel.h>
 #include <stdint.h>
 #include <stddef.h>
-#include <setjmp.h>
-#include <msr.h>
+#include <arch/x86_64/setjmp.h>
+#include <arch/x86_64/msr.h>
 #include <stdio.h>
 
 struct jmp_buf sys_exit_buf;

@@ -32,7 +32,7 @@ SOFTWARE.
 
 #include <drivers/uart.h>
 #include <stdio.h>
-#include <common.h>
+#include <arch/x86_64/kernel.h>
 
 
 #define isdigit(c)		(c >= '0' && c <= '9')
@@ -236,7 +236,7 @@ int pprintf(int color, const char* fmt, ...)
 }
 
 
-int dprintf(const char* fmt, ...)
+int kernel_log(const char* fmt, ...)
 {
 	int r;
 	memset(buf, 0, 256);

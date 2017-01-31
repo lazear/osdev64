@@ -10,10 +10,16 @@ ASFLAGS = -f elf64
 ASOURCE += $(wildcard *.asm)
 CSOURCE += $(wildcard *.c)
 CSOURCE += $(wildcard drivers/*.c)
+CSOURCE += $(wildcard lib/*.c)
+
 HEADERS += $(wildcard $(INCLUDE)/*.h)
 HEADERS += $(wildcard $(INCLUDE)/*/*.h)
 OBJECTS += $(ASOURCE:.asm=.o)
 OBJECTS += $(CSOURCE:.c=.o)
+
+AP_ENTRY = ap_entry 
+AP_ENTRY_SRC = ap_entry.s
+
 
 .PHONY: default all clean
 default: all
@@ -26,8 +32,12 @@ default: all
 	@echo "\033[1;32mas $<\033[0m"
 	@$(AS) $(ASFLAGS) $< -o $@
 
-$(FINAL): $(OBJECTS) 
-	$(LD) $(LDFLAGS) $(OBJECTS) -b binary $(EXE) -o $(FINAL)
+$(AP_ENTRY): $(AP_ENTRY_SRC) 
+	@echo "\033[1;32mas $<\033[0m"
+	@$(AS) -f bin $< -o $@
+
+$(FINAL): $(OBJECTS) $(AP_ENTRY)
+	$(LD) $(LDFLAGS) $(OBJECTS) -b binary $(EXE) $(AP_ENTRY) -o $(FINAL)
 
 all: $(FINAL)
 	@echo $(CSOURCE) $(ASOURCE) $(HEADERS) | xargs wc -l | grep total

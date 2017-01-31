@@ -3,7 +3,7 @@
 
 #include <stdarg.h>
 
-extern int dprintf(const char* fmt, ...);
+extern int kernel_log(const char* fmt, ...);
 extern int printf(const char* fmt, ...);
 extern int snprintf(char* str, size_t n, const char* fmt, ...);
 extern int vsnprintf(char *str, size_t size, const char *format, va_list ap) ;

@@ -24,8 +24,8 @@ SOFTWARE.
 ===============================================================================
 */
 
-#include <interrupts.h>
-#include <common.h>
+#include <arch/x86_64/interrupts.h>
+#include <arch/x86_64/kernel.h>
 #include <stdint.h>
 
 #define PIC1_CMD		0x20

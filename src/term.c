@@ -30,7 +30,7 @@ SOFTWARE.
 #include <stdatomic.h>
 
 #include <lock.h>
-#include <common.h>
+#include <arch/x86_64/kernel.h>
 #include <stdio.h>
 
 static struct vga_coord {

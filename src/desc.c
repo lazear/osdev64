@@ -27,9 +27,9 @@ SOFTWARE.
 #include <stddef.h>
 #include <stdint.h>
 
-#include <interrupts.h>
-#include <desc.h>
-#include <common.h>
+#include <arch/x86_64/interrupts.h>
+#include <arch/x86_64/desc.h>
+#include <arch/x86_64/kernel.h>
 
 /* Interrupt descriptor table */
 struct idt_descriptor idt[256];
