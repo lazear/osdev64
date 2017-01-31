@@ -101,8 +101,7 @@
 // 	lapic_write(DIVIDE_CONF, divide_by);
 // 	lapic_write(INIT_COUNT, initial_count);
 // 	lapic_write(CURR_COUNT, 0);
-// 	kernel_log("[lapic] cpu %d timer mode set to %d, initial count: %#x, divide_by: %X\n", \
-// 		lapic_read(LAPIC_ID)>>24, mode, initial_count, divide_by);
+// 	kernel_log("[lapic] cpu %d timer mode set to %d, initial count: %#x, divide_by: %X\n", lapic_read(LAPIC_ID)>>24, mode, initial_count, divide_by);
 // }
 
 // int lapic_danger_id() 

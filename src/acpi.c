@@ -103,8 +103,8 @@ int acpi_init()
 	 * (isn't that a mouthful?) need to sum to zero */
 	assert(acpi_checksum((char*) h) == 0);
 	kernel_log("[acpi] version %d table detected\n", h->rev);
+	struct rsdt_header* r = (struct rsdt_header*) ((h->rev == 0) ? h->rsdt_ptr : h->xsdt_ptr);
 
-	struct rsdt_header* r = (struct rsdt_header*) h->rsdt_ptr;
 
 	/* Most likely, our memory map has not included this region as valid memory
 	 * so trying to request the address from the physical memory manager will 

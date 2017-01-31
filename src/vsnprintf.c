@@ -29,13 +29,11 @@ SOFTWARE.
 #include <stdint.h>
 #include <stdarg.h>
 #include <limits.h>
-
-#include <drivers/uart.h>
 #include <stdio.h>
+#include <ctype.h>
+#include <drivers/uart.h>
 #include <arch/x86_64/kernel.h>
 
-
-#define isdigit(c)		(c >= '0' && c <= '9')
 
 #define PREFIX			1
 #define ALWAYS_SIGN		2

@@ -11,7 +11,7 @@ struct rsdp_header {
 	uint8_t rev;
 	uint32_t rsdt_ptr;		
 	uint32_t length;
-	uint64_t* xsdt_ptr;
+	uint64_t xsdt_ptr;
 	uint8_t extchecksum;
 	uint8_t pad[3];
 }  __attribute__((packed));
