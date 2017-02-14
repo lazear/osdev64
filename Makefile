@@ -5,7 +5,7 @@ export INCLUDE = $(shell pwd)/include/
 export DISK = $(shell pwd)/disk
 export EXE = $(shell pwd)/a.out
 
-RAM = 256
+RAM = 32
 
 all:
 	@make -s -C src

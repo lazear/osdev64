@@ -10,8 +10,20 @@
 #include <frame.h>
 #include <arch/x86_64/mmu.h>
 
-
 static struct page* PML4;
+
+void* __to_address(uint64_t pml4, uint64_t pdp, uint64_t pd, uint64_t pt)
+{
+	uint64_t ret = (pml4 << 39);
+	if (ret & (1LL << 47)) {
+		/* Bits 48:64 must mirror bit 47 */
+		ret |= 0xFFFF000000000000;
+	}
+	ret |= (pdp << 30);
+	ret |= (pd  << 21);
+	ret |= (pt  << 12);
+	return (void*)ret;
+}
 
 size_t get_cr3(void)
 {
@@ -28,19 +40,32 @@ void mmu_init(void)
 
 	PML4 = page_request(cr3);
 	assert(PML4);
-	PML4->data = (void*) 0xfffffffffffff000;
+	PML4->data = (void*) __to_address(RECURSIVE_ENTRY, RECURSIVE_ENTRY, RECURSIVE_ENTRY, RECURSIVE_ENTRY);
 	PML4->flags = P_USED | P_IMMUTABLE | P_KERNEL | P_VIRT;
 	list_del(&PML4->pages);
 	list_del(&PML4->lru);
 	size_t* pml4 = (size_t*) P2V(cr3);
 
-	pml4[0x1ff] = (size_t) cr3 | (PRESENT | RW);
+	pml4[RECURSIVE_ENTRY] = (size_t) cr3 | (PRESENT | RW);
 }
 
 
-size_t mmu_get_addr(size_t virt)
+/**
+ * @brief Convert a virtual address to physical address.
+ * @details Use recursive page mapping to access paging structures.
+ * NOTE: This only works for 4KB pages, and we need to be careful since we
+ * mix 2mb and 4kb pages.
+ * 
+ * @return Physical address
+ */
+size_t mmu_virt_to_phys(size_t virt)
 {
-	return virt;
+	/*
+	size_t* pdpt = __to_address(RECURSIVE_ENTRY, RECURSIVE_ENTRY, RECURSIVE_ENTRY, PML4E(virt));
+	size_t* pd 	 = __to_address(RECURSIVE_ENTRY, RECURSIVE_ENTRY, PML4E(virt), PDPTE(virt));
+	*/
+	size_t* pt   = __to_address(RECURSIVE_ENTRY, PML4E(virt), PDPTE(virt), PDE(virt));
+	return pt[PTE(virt)];
 }
 
 
@@ -65,7 +90,7 @@ void mmu_bootstrap(size_t physical, size_t* pml4, size_t* pdpt, size_t* pd)
 
 	/* Map in address, and recursively map in PML4 */
 	pml4[PML4E(KERNEL_VIRT)] 	= ((size_t) pdpt) | (PRESENT | RW);
-	pml4[0x1FF] = ((size_t) pml4) | (PRESENT | RW);
+	pml4[RECURSIVE_ENTRY] = ((size_t) pml4) | (PRESENT | RW);
 	pdpt[PDPTE(physical)] = ((size_t) pd) | (PRESENT | RW);
 	for (i = 0; i < physical; i += 0x00200000) {
 		pd[PDE(i)] = i | (PRESENT | RW | PS);
@@ -83,7 +108,6 @@ void mmu_map2mb(size_t physical, size_t address, int flags)
 	size_t* pd = NULL;
 
 	physical = ROUND_DOWN(physical, (1<<21));
-	printf("physical address %x", physical);
 
 	if (pml4[PML4E(address)] & PRESENT) {
 		pdpt = (size_t*) ROUND_DOWN(pml4[PML4E(address)], PAGE_SIZE);
@@ -143,7 +167,7 @@ void mmu_map_page(struct page* frame, size_t address, int flags)
 		kernel_log("[mmu ] allocating page %#x for new PD\n", p->address);
 		pd = (size_t*) P2V(p->address);
 		pdpt[PDPTE(address)] = ((size_t) p->address) | (PRESENT | RW);
-		pdpt[0x1ff] = ((size_t) pdpt) | (PRESENT | RW);
+		//pdpt[RECURSIVE_ENTRY] = ((size_t) pdpt) | (PRESENT | RW);
 	}
 	assert(pd);
 	if (pd[PDE(address)] & PRESENT) {
@@ -157,7 +181,6 @@ void mmu_map_page(struct page* frame, size_t address, int flags)
 		kernel_log("[mmu ] allocating page %#x for new PT\n", p->address);
 		pt = (size_t*) P2V(p->address);
 		pd[PDE(address)] = ((size_t) p->address) | (PRESENT | RW);
-		//pd[0x1ff] = ((size_t) pd) | (PRESENT | RW);
 	}
 	assert(pt);
 	pt[PTE(address)] = (frame->address | flags);
