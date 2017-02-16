@@ -100,18 +100,32 @@ readmsr:
 	pop rbp
 	ret
 
+global idt_flush
+idt_flush:
+	push rbp
+	mov rbp, rsp
+	sub rsp, 10 
+	mov word  [rsp+0], 0xFFF 
+	mov qword [rsp+2], rdi
+	lidt [rsp]
+	add rsp, 10
+	mov rsp, rbp
+	pop rbp
+	ret
+
 ;;; gdt_flush(rdi = GDT descriptor)
 ;;; load and flush a new GDT, and task register
 ;;; KERNEL_CODE = 0x08
 ;;; KERNEL_DATA = 0x10 
 ;;; KERNEL_TSS = 0x30 
 gdt_flush:
+	;push rbp
+	;mov rbp, rsp
+	;hlt
 	lgdt [rdi]
 
-	; It's important to push rbp and not rsp
-	; otherwise we'll lose the return address 
-	push 0 			; push ss 
-	push rbp 		; push rsp 
+	push 0x10 			; push ss 
+	push rsp 		; push rsp/rbp, same thing here 
 	pushf 			; push rflags 
 	push 0x08 		; push cs
 	mov rax, .flush
@@ -119,15 +133,16 @@ gdt_flush:
 	iretq			; call iret
 
 .flush:
-	mov rax, 0x10
+	; 0x10 is still on the stack, since we push rsp after ss
+	pop rax
 	mov es, ax
 	mov ds, ax 
 	mov gs, ax
 	mov fs, ax
-
 	mov ax, 0x30
 	ltr ax
-	pop rbp
+
+
 	ret
 
 

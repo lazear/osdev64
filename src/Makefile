@@ -37,7 +37,7 @@ $(AP_ENTRY): $(AP_ENTRY_SRC)
 	@$(AS) -f bin $< -o $@
 
 $(FINAL): $(OBJECTS) $(AP_ENTRY)
-	$(LD) $(LDFLAGS) $(OBJECTS) -b binary $(EXE) $(AP_ENTRY) -o $(FINAL)
+	$(LD) $(LDFLAGS) $(OBJECTS) -b binary $(AP_ENTRY) -o $(FINAL)
 
 all: $(FINAL)
 	@echo $(CSOURCE) $(ASOURCE) $(HEADERS) | xargs wc -l | grep total

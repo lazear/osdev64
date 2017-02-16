@@ -27,9 +27,11 @@ SOFTWARE.
 #include <arch/x86_64/interrupts.h>
 #include <arch/x86_64/desc.h>
 #include <arch/x86_64/kernel.h>
+#include <arch/x86_64/mmu.h>
+#include <stack_trace.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <arch/x86_64/mmu.h>
+
 
 extern void halt_catch_fire(void);
 
@@ -126,6 +128,7 @@ void trap(struct registers* r)
 		printf("r12 %#x r13 %#x\n", r->r12, r->r13);
 		printf("r14 %#x r15 %#x\n", r->r14, r->r15);
 
+		stack_trace(r->rbp);
 
 		halt_catch_fire();
 	} else {

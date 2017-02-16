@@ -58,8 +58,15 @@ void idt_set_gate(int n, int dpl, int type, uint64_t handler)
 	idt[n].type = ((1 << 0xF) | (dpl << 0xD) | (type << 0x8));
 }
 
+struct descriptor {
+	uint16_t limit;
+	uint64_t base;
+};
+
+
 void idt_init(void)
 {
+
 	int i;
 	for (i = 0; i < 256; i++)
 		idt_set_gate(i, 0, 0xE, (uint64_t) vectors[i]);
@@ -67,16 +74,17 @@ void idt_init(void)
 	/* Set SYSCALL (0x80) to DPL=3 */
 	idt_set_gate(SYSCALL, 3, 0xF, (uint64_t) vectors[SYSCALL]);
 	idt_set_gate(BREAKPOINT, 3, 0xF, (uint64_t) vectors[BREAKPOINT]);
-	uint8_t idtr[10];
-	*(uint16_t*) idtr = (uint16_t) 0xFFF;
-	*(uint64_t*) ((uint64_t) idtr + 2) = (uint64_t) &idt;
+
 
 	for (i = 0; i < 3; i++) {
 		system_tss.rsp[i] = 0xFFFF80000000A000;
 		system_tss.ist[i] = 0xFFFF80000000A000;
 	}
-	asm volatile("lidt (%0)" : : "r" ((uint64_t)&idtr));
 
+	/* With -O3, GCC becomes extremely lazy and will not fill out
+	 * a local IDTR descriptor if you just pass the address...
+	 * so I outsourced to an assembly function, with hardcoded 0xFFF limit */
+	idt_flush((uint64_t) &idt);
 }
 
 void gdt_init(void)
@@ -114,9 +122,6 @@ void gdt_init(void)
 	uint8_t gdtr[10];
 	*(uint16_t*) gdtr = (uint16_t) sizeof(gdt) -1;
 	*(uint64_t*) ((uint64_t) gdtr + 2) = (uint64_t) &gdt;
-
-
-
 	gdt_flush((uint64_t) gdtr);
 }
 

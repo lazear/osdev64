@@ -49,6 +49,8 @@ struct memory_map
 
 void main(void)
 {
+	if (!sse42_enabled())
+		kernel_log("[init] No SSE4.2 support!\n");
 	vga_clear();
 	gdt_init(); 	
 	idt_init();			
@@ -97,8 +99,7 @@ void main(void)
 
 	printf("[init] probing processor features\n");
 	//printf("%dM total physical memory detected\n", phys_mem_detected / 0x100000);
-	printf("x2APIC? %d\n", x2apic_enabled() & (1<<21));
-	printf("SSE4.2? %d\n", sse42_enabled());
+	//printf("x2APIC? %d\n", x2apic_enabled() & (1<<21));
 	struct page* rsp = mmu_req_page(0xC0000000, 0x7);
 	printf("ret: %x\nphys %x\n", rsp->address, mmu_virt_to_phys(0xC0000000));
 

@@ -9,6 +9,8 @@
  * 
  * @param gdtr Linear address of 10 byte GDT descriptor.
  */
+
+extern void idt_flush(uint64_t idt);
 extern void gdt_flush(uint64_t gdtr);
 extern void gdt_init(void);
 extern void idt_init(void);
