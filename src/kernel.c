@@ -54,7 +54,7 @@ void main(void)
 	trap_init();
 	syscall_init();
 
-	kernel_log("[init] early kernel boot success!\n");
+	printf("[init] early kernel boot success!\n");
 
 
 	kernel_log("[init] parsing memory map\n");
@@ -93,21 +93,9 @@ void main(void)
 
 	mmu_init();
 
-	printf("[init] probing processor features\n");
-	//printf("%dM total physical memory detected\n", phys_mem_detected / 0x100000);
-	//printf("x2APIC? %d\n", x2apic_enabled() & (1<<21));
-	struct page* rsp = mmu_req_page(0xC0000000, 0x7);
-	printf("ret: %x\nphys %x\n", rsp->address, mmu_virt_to_phys(0xC0000000));
 
-
-
-	printf("%d processors detected\n", acpi_init());
-
-	// extern size_t _binary__mnt_d_Documents_GitHub_osdev64_a_out_start[];
-	// extern size_t _binary__mnt_d_Documents_GitHub_osdev64_a_out_end[];
-	// printf("[init] executing ELF file\n");
+	printf("[init] %d processors detected\n", acpi_init());
 
 	sti();
 	for(;;);
-	//halt_catch_fire();
 }
