@@ -195,7 +195,7 @@ protected_mode:
 	mov gs, ax
 
 	; Set up a stack
-	mov esp, 0x000F0000
+	;mov esp, 0x000F0000
 
 	; check to make sure we can use extended functions
 	mov eax, 0x80000000
@@ -240,7 +240,7 @@ preplongmode:
 	mov eax, [paging.pdp]
 	or eax, 3	
 	mov [edi], eax
-	add edi, 0x800
+	add edi, 0xFF8
 	mov [edi], eax 
 
 	; Set PDP[0] -> PD
@@ -248,7 +248,7 @@ preplongmode:
 	mov eax, [paging.pd]
 	or eax, 3
 	mov [edi], eax 
-	;add edi, 0x1FE 
+	add edi, 0xFF0
 	mov [edi], eax
 
 	; Set PD[0] -> PT
@@ -312,7 +312,7 @@ dw 0xAA55 					; Last 2 bytes = Boot sector identifyer
 %include "elf64.asm"
 
 long_mode:
-	mov rax, 0xFFFF80000000A000
+	mov rax, 0xFFFFFFFF8000A000
 	mov rsp, rax
 	mov rbp, rax
 	mov rdi, data

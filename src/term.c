@@ -35,7 +35,7 @@ static struct vga_coord {
 	uint16_t x, y;
 	struct lock lock;
 } __tty_info = {
-	.vga = (uint8_t*) 0xFFFF8000000b8000,
+	.vga = (uint8_t*) P2V(0xB8000),
 	.attrib = 0x7,
 	.x = 0,
 	.y = 0,
