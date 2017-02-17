@@ -1,6 +1,7 @@
 /*
 MIT License
-Copyright (c) 2016-2017 Michael Lazear
+
+Copyright (c) Michael Lazear, 2016 - 2017 
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,53 +22,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include <arch/x86_64/interrupts.h>
-
 #include <arch/x86_64/kernel.h>
-#include <stdint.h>
-#include <stddef.h>
-#include <arch/x86_64/setjmp.h>
-#include <arch/x86_64/msr.h>
-#include <stdio.h>
 
-struct jmp_buf sys_exit_buf;
-
-extern void sys_exit(struct jmp_buf*, uint64_t val);
-
-
-void syscall_handler(struct syscall* r)
+int strncmp(const char *s1, const char *s2, size_t n)
 {
-	printf("SYSCALL %d\n", r->rax);
-
-	if (r->rax == 1)
-		printf("sys_write: %s\n", r->rsi);
-
-	if (r->rax == 60) {
-		printf("sys_exit\n");
-		longjmp(&sys_exit_buf, r->rip);
-
-	}
+    for ( ; n > 0; s1++, s2++, --n)
+		if (*s1 != *s2)
+			return ((*(unsigned char *)s1 < *(unsigned char *)s2) ? -1 : +1);
+		else if (*s1 == '\0')
+			return 0;
+    return 0;
 }
-
-
-/**
- * @brief Initialize usage of "syscall" and "sysret" instructions.
- */
-
-extern void* syscall_entry();
-void syscall_init(void)
-{
-	uint64_t cs = 0x800000000;
-	
-	/* thanks to Bochs being stricter than QEMU, this
-	 * bug was squashed */
-	uint64_t EFER = readmsr(IA32_EFER);
-	writemsr(IA32_EFER, EFER | (1 << IA32_EFER_SCE));
-	/* Write CS to bits 32:47 of IA32_STAR MSR */
-	writemsr(IA32_STAR, cs);
-	/* Write RFLAGS mask to IA32_FMASK */
-	writemsr(IA32_FMASK, 0x200);
-	/* Write entry RIP to IA32_LSTAR */
-	writemsr(IA32_LSTAR, (uint64_t) syscall_entry);
-}
-

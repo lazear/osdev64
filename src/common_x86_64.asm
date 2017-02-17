@@ -20,6 +20,8 @@
 ; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ; SOFTWARE.
 
+
+
 ; Common library in x86_64 assembly. Functions are defined in include/arch/x86_64/kernel.h
 ; SysV x86_64 ABI:
 ; First 6 parameters are passed in rdi, rsi, rdx, rcx, r8, and r9.
@@ -27,25 +29,18 @@
 ; Callee must preserve rsp, rbp, rbx, r12-r15
 ; Return value is in RDX:RAX
 
-; Memcpy/memset etc are unoptimized.
 
 [bits 64]
 
-global strlen
-global strcpy
-global strncpy
-global memcpy
-global memset
-global memsetw
-
+global idt_flush
 global gdt_flush
 global writemsr 
 global readmsr 
 global outb 
 global inb 
 global halt_catch_fire
-
 global x2apic_enabled
+
 x2apic_enabled:
 	mov rax, 1
 	cpuid
@@ -100,7 +95,7 @@ readmsr:
 	pop rbp
 	ret
 
-global idt_flush
+
 idt_flush:
 	push rbp
 	mov rbp, rsp
@@ -145,86 +140,3 @@ gdt_flush:
 
 	ret
 
-
-;;; memset(rdi = destination, rsi = fill, rdx = count)
-memset:
-	mov rax, rsi
-	mov rcx, rdx
-	rep stosb
-	ret
-
-;;; memsetw(rdi = destination, rsi = fill, rdx = count)
-memsetw:
-	mov rax, rsi
-	mov rcx, rdx 
-	rep stosw 
-	ret
-
-;;; memcpy(rdi = destination, rsi = source, rdx = count)
-;;; unoptimized memcpy
-memcpy:
-	mov rcx, rdx 
-	rep movsb
-	ret
-
-;;; strncpy(rdi = destination, rsi = source, rdx = length)
-;;; copy until rdx, or source byte is zero 
-strncpy:
-	push rbp 
-	mov rbp, rsp
-	sub rsp, 8
-	; save desination buffer
-	mov [rsp - 8], rdi 
-	xor rax, rax 
-
-	.l1:
-		lodsb 		; al = [rsi++]
-		test al, al  
-		jz .done 	; al = 0, done 
-		stosb  		; [rdi++] = al
-		dec rdx 
-		test rdx, rdx 	
-		jnz .l1 		; length = rdx, done
-	.done:
-	; C standard library says that we should fill up dest
-	; buffer with zeroes if length remains
-	mov rcx, rdx 
-	mov al, 0
-	rep stosb
-
-	; restore original destination buffer
-	mov rax, [rsp - 8]
-	add rsp, 8 
-	mov rsp, rbp
-	pop rbp 
-	ret
-
-; (rdi = dest, rsi = src)
-; increases rdi and rsi, trashes rax 
-strcpy:
-	xor rax, rax 
-	mov rcx, rax
-	.l1:
-		lodsb  		; al = [esi]
-		test al, al 
-		jz .done  	; al = 0, EOF 
-		stosb 		; [edi] = al
-		jmp .l1
-	.done:
-		ret
-
-; rax = strlen(rdi)
-; trashes rax, rsi, rcx
-strlen:
-	xor rax, rax 
-	mov rcx, rax
-	mov rsi, rdi
-	.loop:
-		lodsb
-		test al, al 
-		jz .done
-		inc rcx 
-		jmp .loop 
-	.done:
-		mov rax, rcx
-		ret

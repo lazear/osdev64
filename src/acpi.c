@@ -1,7 +1,6 @@
 /*
 MIT License
-
-Copyright (c) Michael Lazear, 2016 - 2017 
+Copyright (c) 2016-2017 Michael Lazear
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +21,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-
 #include <stdint.h>
 #include <stddef.h>
 #include <arch/x86_64/kernel.h>
@@ -31,17 +29,6 @@ SOFTWARE.
 #include <assert.h>
 #include <acpi.h>
 #include <frame.h>
-
-
-int strncmp(const char *s1, const char *s2, size_t n)
-{
-    for ( ; n > 0; s1++, s2++, --n)
-		if (*s1 != *s2)
-			return ((*(unsigned char *)s1 < *(unsigned char *)s2) ? -1 : +1);
-		else if (*s1 == '\0')
-			return 0;
-    return 0;
-}
 
 static int acpi_checksum(char* ptr)
 {

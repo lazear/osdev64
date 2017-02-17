@@ -8,6 +8,7 @@ LDFLAGS	= -Map map.txt -T linker.ld -z max-page-size=0x1000
 ASFLAGS = -f elf64
 
 ASOURCE += $(wildcard *.asm)
+ASOURCE += $(wildcard lib/*.asm)
 CSOURCE += $(wildcard *.c)
 CSOURCE += $(wildcard drivers/*.c)
 CSOURCE += $(wildcard lib/*.c)

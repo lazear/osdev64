@@ -14,6 +14,7 @@ extern uint8_t inb(uint16_t port);
 extern void outb(uint16_t port, uint8_t data);
 extern void writemsr(size_t reg, size_t data);
 extern size_t readmsr(size_t reg);
+int strncmp(const char *s1, const char *s2, size_t n);
 
 extern void halt_catch_fire(void);
 
