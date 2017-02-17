@@ -18,8 +18,8 @@ int strncmp(const char *s1, const char *s2, size_t n);
 
 extern void halt_catch_fire(void);
 
-#define KERNEL_VIRT		0xFFFF800000000000
-#define INITIAL_TOP		0xFFFF800000400000
+#define KERNEL_VIRT		0xFFFFFFFF80000000
+#define INITIAL_TOP		0xFFFFFFFF80400000
 
 #define PAGE_SIZE 0x1000
 
