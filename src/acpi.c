@@ -108,9 +108,6 @@ int acpi_init()
 		temp.address = ROUND_DOWN(r->tableptrs[i], PAGE_SIZE);
 		mmu_map_page(&temp, ROUND_DOWN(P2V(r->tableptrs[i]), PAGE_SIZE), PRESENT|RW);
 		assert((size_t) temp.data == ROUND_DOWN(P2V(r->tableptrs[i]), PAGE_SIZE));
-
-		kernel_log("[acpi] signature: %s\n", entry->signature);
-
 		if (!strncmp(entry->signature, "APIC", 4)) {
 			cpu_count = acpi_parse_madt((struct madt_header*) entry);			//return acpi_parse_madt((struct madt_header*) entry);
 		}

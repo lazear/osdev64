@@ -42,26 +42,13 @@ struct memory_map
 	uint64_t type;
 };
 
-
-void main(void)
+void pmm_init(size_t mem_map_location, int mem_map_length)
 {
-	if (!sse42_enabled())
-		kernel_log("[init] No SSE4.2 support!\n");
-	vga_clear();
-	gdt_init(); 	
-	idt_init();			
-	pic_init();
-	trap_init();
-	syscall_init();
-
-	printf("[init] early kernel boot success!\n");
-
-
 	kernel_log("[init] parsing memory map\n");
 	/* Parse memory map */
-	uint8_t memlen = *(uint8_t*) P2V(0x6FF0) / sizeof(struct memory_map);
-	struct memory_map* mmap = (struct memory_map*) P2V(0x7000);
-	struct memory_map* mmax = mmap + memlen;
+
+	struct memory_map* mmap = (struct memory_map*) mem_map_location;
+	struct memory_map* mmax = mmap + mem_map_length;
 	
 	size_t highest_addr = 0;
 	while (mmap < mmax) {
@@ -90,10 +77,28 @@ void main(void)
 	/* Mark everything below end of kernel as belonging to us */
 	page_mark_range(0, V2P(KERNEL_END), P_KERNEL|P_IMMUTABLE|P_USED);
 	/* Physical memory manager is now up and running */
+}
 
+
+void main(void)
+{
+	if (!sse42_enabled()) {
+		/* SSE4.2 is not heavily used by the kernel... yet.
+		 * So we will not worry too much */
+		kernel_log("[init] No SSE4.2 support!\n");
+	}
+	vga_clear();
+	gdt_init(); 	
+	idt_init();			
+	pic_init();
+	trap_init();
+	syscall_init();
+
+	uint8_t memlen = *(uint8_t*) P2V(0x6FF0) / sizeof(struct memory_map);
+	pmm_init(P2V(0x7000), memlen);
 	mmu_init();
 
-
+	printf("[init] early kernel boot success!\n");
 	printf("[init] %d processors detected\n", acpi_init());
 
 	sti();

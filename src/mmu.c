@@ -187,7 +187,7 @@ void mmu_map_page(struct page* frame, size_t address, int flags)
 	frame->data = (void*) address;
 }
 
-struct page* mmu_req_page(uint64_t address, int flags)
+struct page* mmu_req_page(size_t address, int flags)
 {
 	struct page* page = page_alloc();
 	address = ROUND_DOWN(address, PAGE_SIZE);

@@ -80,7 +80,8 @@ void idt_init(void)
 
 	/* With -O3, GCC becomes extremely lazy and will not fill out
 	 * a local IDTR descriptor if you just pass the address...
-	 * so I outsourced to an assembly function, with hardcoded 0xFFF limit */
+	 * so it's been outsourced to an assembly function with hardcoded 
+	 * 0xFFF limit */
 	idt_flush((uint64_t) &idt);
 }
 
