@@ -25,6 +25,7 @@ SOFTWARE.
 #include <stddef.h>
 #include <arch/x86_64/kernel.h>
 #include <arch/x86_64/mmu.h>
+#include <arch/x86_64/interrupts.h>
 #include <stdio.h>
 #include <assert.h>
 #include <acpi.h>
@@ -49,20 +50,30 @@ static int acpi_parse_madt(struct madt_header* madt)
 		switch(type) {
 			case 0: {
 				struct acpi_lapic *x = (struct acpi_lapic*) entries;
-				kernel_log("[acpi] lapic: processor id %d\tapic id%d\tflags:%d\n", x->acpi_proc_id, x->apic_id, x->flags);
+				kernel_log("[acpi] lapic: processor id %d\tapic id %d\tflags:%d\n", x->acpi_proc_id, x->apic_id, x->flags);
 				num_lapics++;
 				break;
 			}
 			case 1: {
 				struct acpi_ioapic *x = (struct acpi_ioapic*) entries;
 				kernel_log("[acpi] ioapic: id %d\taddress:0x%x\n", x->ioapic_id, x->ioapic_addr);
+				ioapic_init(x->ioapic_addr);
 				break;
 			}
 			case 2: {
 				struct acpi_iso *x = (struct acpi_iso*)  entries;
 				kernel_log("[acpi] irq src %d bus src %d gsi %d\n", x->irq_src, x->bus_src, x->gsi);
+				ioapic_remap(x->irq_src, x->gsi, 0);
 				break;
 			}
+			case 9: {
+				struct acpi_x2apic* x = (struct acpi_x2apic*) entries;
+				kernel_log("[acpi] x2apic: processor id %d\tflags: %d\n", x->apic_id, x->flags);
+				num_lapics++;
+				break;
+			}
+			default:
+				kernel_log("[acpi] unsupported field: %d\n", type);
 		}
 		entries += len;
 	} 
@@ -108,6 +119,11 @@ int acpi_init()
 		temp.address = ROUND_DOWN(r->tableptrs[i], PAGE_SIZE);
 		mmu_map_page(&temp, ROUND_DOWN(P2V(r->tableptrs[i]), PAGE_SIZE), PRESENT|RW);
 		assert((size_t) temp.data == ROUND_DOWN(P2V(r->tableptrs[i]), PAGE_SIZE));
+
+		char name[5];
+		memcpy(name, entry->signature, 4);
+		name[4] = '\0';
+		kernel_log("[acpi] entry %s found\n", name);
 		if (!strncmp(entry->signature, "APIC", 4)) {
 			cpu_count = acpi_parse_madt((struct madt_header*) entry);			//return acpi_parse_madt((struct madt_header*) entry);
 		}

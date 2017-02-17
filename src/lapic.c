@@ -21,133 +21,154 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-// /*
-// http://www.intel.com/design/pentium/datashts/24201606.pdf
+/*
+http://www.intel.com/design/pentium/datashts/24201606.pdf
 
-// BSP: Bootstrap processor - the core we are currently running on
-// AP: Application processor(s). Currently halted.
-// */
-
-
-// #include <stdint.h>
-// #include <stddef.h>
-// #include <frame.h>
-// #include <lock.h>
-// #include <lapic.h>
-// #include <arch/x86_64/kernel.h>
-// #include <arch/x86_64/cpu.h>
-// #include <arch/x86_64/desc.h>
-// #include <arch/x86_64/mmu.h>
-// #include <arch/x86_64/interrupts.h>
+BSP: Bootstrap processor - the core we are currently running on
+AP: Application processor(s). Currently halted.
+*/
 
 
-// extern size_t _binary_ap_entry_start[];
-// extern size_t _binary_ap_entry_end[];
-
-// volatile int ncpu = 0;
-
-// static struct lock lock;
-// static int lapic_up = 0;
-
-
-// static void lapic_write(int index, int value) 
-// {
-// 	*(size_t*) (LAPIC_BASE + index) = value;	/* Write to lapic register */
-// 	*(size_t*) (LAPIC_BASE + LAPIC_ID);	/* Wait by reading */
-// }
-
-// static size_t lapic_read(int index) 
-// {
-// 	return *(size_t*) (LAPIC_BASE + index);
-// }
-
-// int lapic_active()
-// {
-// 	return lapic_up;
-// }
-
-// void lapic_eoi() 
-// {
-// 	if (!lapic_up)
-// 		return;
-// 	lapic_write(LAPIC_EOI, 0);
-// }
-
-// void lapic_test(uint16_t dest, uint16_t sh, uint16_t vector) 
-// {
-// 	lapic_write(LAPIC_ICRHI, dest << 24);
-// 	lapic_write(LAPIC_ICRLO, (sh << 17) | vector);
-// }
-
-// void lapic_timer_config(uint8_t mode, uint32_t initial_count, uint8_t divide_by) 
-// {
-// 	/* LVT Timer register:
-// 		19:17 Timer mode
-// 		16:15 Mask
-// 		12:11 Delivery status
-// 		7:0 Vector 	*/
-// 	lapic_write(TIMER, (mode << 17) | 0x20 + IRQ_TIMER);
-// 	/* LVT Divide Configuration Register, bits 0, 1, and 3 
-// 		0000 Divide by 2
-// 		0001 Divide by 4
-// 		0010 Divide by 8
-// 		0011 Divide by 16
-// 		1000 Divide by 32
-// 		1001 Divide by 64
-// 		1010 Divide by 128
-// 		1011 Divide by 1 */
-// 	lapic_write(DIVIDE_CONF, divide_by);
-// 	lapic_write(INIT_COUNT, initial_count);
-// 	lapic_write(CURR_COUNT, 0);
-// 	kernel_log("[lapic] cpu %d timer mode set to %d, initial count: %#x, divide_by: %X\n", lapic_read(LAPIC_ID)>>24, mode, initial_count, divide_by);
-// }
-
-// int lapic_danger_id() 
-// {
-// 	return lapic_read(LAPIC_ID) >> 24;
-// }
-
-// /* Initilize the local advanced programmable interrupt chip 
-// PIC should already be disabled by the time we get here*/
-// void lapic_init() {
-// 	lock_init(&lock);
-
-// 	struct page lapic_base;
-// 	lapic_base.address = LAPIC_BASE;
-// 	mmu_map_page(&lapic_base, LAPIC_BASE, PRESENT | RW);
-
-// 	/* Enable local APIC and set the spurious interrupt vector */
-// 	lapic_write(LAPIC_SIV, 0x100 | (IRQ_ZERO + IRQ_SPURIOUS));
-
-// 	/* Setup timer on the first CPU only to avoid race for timer()*/
-// 	lapic_timer_config(PERIODIC, 0x10000, 0x0A);
+#include <stdint.h>
+#include <stddef.h>
+#include <frame.h>
+#include <lock.h>
+#include <lapic.h>
+#include <arch/x86_64/kernel.h>
+#include <arch/x86_64/cpu.h>
+#include <arch/x86_64/desc.h>
+#include <arch/x86_64/mmu.h>
+#include <arch/x86_64/interrupts.h>
+#include <arch/x86_64/msr.h>
 
 
-// 	/* Mask local interrupts */
-// 	//lapic_write(LAPIC_LINT0, 0x10000);
-// 	//lapic_write(LAPIC_LINT1, 0x10000);
+extern size_t _binary_ap_entry_start[];
+extern size_t _binary_ap_entry_end[];
 
-// 	if ((lapic_read(LAPIC_VER) >> 16) & 0xFF >= 4)
-// 		lapic_write(0x0340, 0x10000);
+volatile int ncpu = 0;
 
-// 	lapic_write(LAPIC_ERR, IRQ_ZERO + IRQ_ERROR);
+static struct lock lock;
+static int lapic_up = 0;
 
-// 	lapic_write(LAPIC_ERR, 0);
-// 	lapic_write(LAPIC_EOI, 0);	// Clear any existing interrupts
 
-// 	lapic_write(LAPIC_ICRHI, 0);
-// 	lapic_write(LAPIC_ICRLO, INIT | LEVEL | BCAST);
+static void lapic_write(uint32_t index, uint32_t value) 
+{
+	*(uint32_t*) (LAPIC_BASE + index) = value;	/* Write to lapic register */
+//	return *(uint32_t*) (LAPIC_BASE + LAPIC_ID);			/* Wait by reading */
+}
 
-// 	while(lapic_read(LAPIC_ICRLO) & DELIVS)
-// 		;
+static uint32_t lapic_read(uint32_t index) 
+{
+	return *(uint32_t*) (LAPIC_BASE + index);
+}
 
-// 	lapic_write(LAPIC_TPR, 0);
-// 	lapic_up = 1;
-// }
+int lapic_active()
+{
+	return lapic_up;
+}
 
-// int udelay(int i) {
-// 	lapic_read(LAPIC_ID);
-// }
+void lapic_eoi() 
+{
+	if (!lapic_up)
+		return;
+	lapic_write(LAPIC_EOI, 0);
+}
+
+void lapic_test(uint16_t dest, uint16_t sh, uint16_t vector) 
+{
+	lapic_write(LAPIC_ICRHI, dest << 24);
+	lapic_write(LAPIC_ICRLO, (sh << 17) | vector);
+}
+
+void lapic_timer_config(uint8_t mode, uint32_t initial_count, uint8_t divide_by) 
+{
+	/* LVT Timer register:
+		19:17 Timer mode
+		16:15 Mask
+		12:11 Delivery status
+		7:0 Vector 	*/
+	lapic_write(TIMER, (mode << 17) | (IRQ_ZERO + IRQ_TIMER));
+	/* LVT Divide Configuration Register, bits 0, 1, and 3 
+		0000 Divide by 2
+		0001 Divide by 4
+		0010 Divide by 8
+		0011 Divide by 16
+		1000 Divide by 32
+		1001 Divide by 64
+		1010 Divide by 128
+		1011 Divide by 1 */
+	lapic_write(DIVIDE_CONF, divide_by);
+	lapic_write(INIT_COUNT, initial_count);
+	lapic_write(CURR_COUNT, 0);
+	kernel_log("[lapic] cpu %d timer mode set to %d, initial count: %#x, divide_by: %X\n", lapic_read(LAPIC_ID)>>24, mode, initial_count, divide_by);
+}
+
+int lapic_danger_id() 
+{
+	return lapic_read(LAPIC_ID) >> 24;
+}
+
+/* Initilize the local advanced programmable interrupt chip 
+PIC should already be disabled by the time we get here*/
+void lapic_init()
+{
+	lock_init(&lock);
+
+	struct page lapic_base;
+	lapic_base.address = LAPIC_BASE;
+	mmu_map_page(&lapic_base, LAPIC_BASE, PRESENT | RW);
+
+	/* Enable local APIC and set the spurious interrupt vector */
+//	lapic_write(LAPIC_SIV, 0x100 | (IRQ_ZERO + IRQ_SPURIOUS));
+
+
+	uint64_t apic_base = readmsr(IA32_APIC_BASE);
+
+	apic_base |= (1<<11);	/* Global enable flag */
+	writemsr(IA32_APIC_BASE, apic_base);
+	kernel_log("[lapic] configuring for processor %d\n", lapic_read(LAPIC_ID));
+
+	if (apic_base & (1<<8)) {
+		/* we are bootstrap processor */
+
+	
+	}
+
+
+
+
+
+	/* Setup timer on the first CPU only to avoid race for timer()*/
+
+
+
+	/* Mask local interrupts */
+	//lapic_write(LAPIC_LINT0, 0x10000);
+	//lapic_write(LAPIC_LINT1, 0x10000);
+
+	if (((lapic_read(LAPIC_VER) >> 16) & 0xFF) >= 4)
+		lapic_write(0x0340, 0x10000);
+
+	lapic_write(LAPIC_ERR, IRQ_ZERO + IRQ_ERROR);
+
+	lapic_write(LAPIC_ERR, 0);
+	lapic_write(LAPIC_EOI, 0);	// Clear any existing interrupts
+
+	lapic_write(LAPIC_ICRHI, 0);
+	lapic_write(LAPIC_ICRLO, INIT | LEVEL | BCAST);
+
+	while(lapic_read(LAPIC_ICRLO) & DELIVS)
+		;
+
+	lapic_write(LAPIC_TPR, 0);
+	lapic_up = 1;
+	lapic_timer_config(PERIODIC, 0x10000, 0x0A);
+	kernel_log("[lapic] configuration complete\n");
+}
+
+int udelay(int i) {
+	return lapic_read(LAPIC_ID);
+}
 
 // /* Sends a start up IPI to the AP processor designated <apic_id>,
 // telling it to start executing code at <address> 

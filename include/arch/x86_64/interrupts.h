@@ -29,6 +29,16 @@ extern void pic_init(void);
 extern void syscall_init(void);
 extern void syscall_handler(struct syscall*);
 
+
+int ioapic_enable(uint8_t irq, uint16_t cpu);
+int ioapic_remap(uint8_t src, uint8_t gsi, uint16_t cpu);
+void ioapic_disable(uint8_t irq);
+void ioapic_init(uint64_t ioapic_address);
+
+void lapic_init();
+void lapic_test(uint16_t dest, uint16_t sh, uint16_t vector) ;
+
+
 static inline void cli(void)
 {
 	asm volatile("cli");

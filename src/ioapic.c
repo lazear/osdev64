@@ -44,18 +44,22 @@ http://www.intel.com/design/chipsets/datashts/29056601.pdf
 
 static size_t IOAPIC = 0;
 
-static uint32_t ioapic_read(int reg) {
+static uint32_t ioapic_read(int reg)
+{
 	*(uint32_t*)(IOAPIC + IOREGSEL) = reg;
 	return *(uint32_t*)(IOAPIC + IOWIN);
 }
 
-static void ioapic_write(int reg, uint32_t data) {
+static void ioapic_write(int reg, uint32_t data)
+{
 	*(uint32_t*)(IOAPIC + IOREGSEL) = reg;
 	*(uint32_t*)(IOAPIC + IOWIN) = data;
 }
 
-void ioapic_enable(uint8_t irq, uint16_t cpu) {
-	
+int ioapic_enable(uint8_t irq, uint16_t cpu)
+{
+	if (! IOAPIC)
+		return -1;
 	/* Write the low 32 bits :
 	31:17 reserved
 	16: Interrupt mask:		1 = masked. 0 = enabled
@@ -80,17 +84,51 @@ void ioapic_enable(uint8_t irq, uint16_t cpu) {
 	ioapic_write(IOREDTBL + (irq * 2), low );
 	/* Write the high 32 bites. 63:56 contains destination field */
 	ioapic_write(IOREDTBL + (irq * 2) + 1, cpu << 24);
+	return 0;
 }
 
-void ioapic_disable(uint8_t irq) {
+int ioapic_remap(uint8_t src, uint8_t gsi, uint16_t cpu)
+{
+		if (! IOAPIC)
+		return -1;
+	/* Write the low 32 bits :
+	31:17 reserved
+	16: Interrupt mask:		1 = masked. 0 = enabled
+	15: Trigger mode:		1 = Level sensitive. 0 = Edge sensitive
+	14: Remote IRR:			1 = LAPIC accept. 0 = LAPIC sent EOI, and IOAPIC received
+	13: INTPOL: 			1 = Low active polarity. 0 = High active polarity
+	12: Delivery Stat:		1 = Send Pending. 0 = IDLE
+	11: Destination Mode:	1 = Logical Mode (Set of processors.. LAPIC id?). 0 = Physical mode, APIC ID
+	10:8 Delivery Mode:
+		000 Fixed
+		001 Lowest priority
+		010 SMI: System Management Interrupt. Requires edge trigger mode
+		011 Reserved
+		100 NMI
+		101 INIT
+		110 Reserved
+		111 ExtINT
+	7:0 Interrupt Vector: 8 bit field containing the interrupt vector, from 0x10 to 0xFE
+	*/
+	uint32_t low = (IRQ_ZERO + gsi);
+	kernel_log("[ioapic] Mapping %d to %d on cpu %d (low dword: %#x)\n", src, gsi, cpu, low);
+	ioapic_write(IOREDTBL + (src * 2), low );
+	/* Write the high 32 bites. 63:56 contains destination field */
+	ioapic_write(IOREDTBL + (src * 2) + 1, cpu << 24);
+	return 0;
+}
+
+void ioapic_disable(uint8_t irq)
+{
 	ioapic_write(IOREDTBL + (irq*2), (1<<16) | (0x20 + irq));
-	ioapic_write(IOREDTBL + (irq*2) +1, 0);
+	ioapic_write(IOREDTBL + (irq*2) + 1, 0);
 }
 
-void ioapic_init(size_t ioapic_address){
+void ioapic_init(size_t ioapic_address)
+{
 	struct page ioapic_page;
 	ioapic_page.address = ROUND_DOWN(ioapic_address, PAGE_SIZE);
-
+	ioapic_address = P2V(ioapic_address);
 	mmu_map_page(&ioapic_page, ioapic_address, PRESENT | RW);
 	IOAPIC = ioapic_address;
 	

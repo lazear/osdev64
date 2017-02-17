@@ -43,6 +43,15 @@ struct acpi_lapic {
 	uint32_t flags;
 }  __attribute__((packed));
 
+struct acpi_x2apic {
+	uint8_t type;			/* ==9; */
+	uint8_t rec_len;
+	uint16_t reserved;
+	uint32_t apic_id;
+	uint32_t flags;
+	uint32_t uid;
+}  __attribute__((packed));
+
 struct acpi_ioapic {
 	uint8_t type;			/* ==1 */
 	uint8_t rec_len;
@@ -66,6 +75,22 @@ struct  madt_header {
 	uint32_t lca;		/* local controller address */
 	uint32_t flags;
 }  __attribute__((packed));
+
+struct fadt_header {
+	struct acpi_header h;
+	uint32_t firmware_ctrl;		/* physical memory address of FACS */
+	uint32_t dsdt; 
+	uint8_t res;
+	uint8_t preferred_profile;	/* preferred power management profile */
+	uint16_t sci_int;	/* system vector the SCI interrupt is wired to in 8259 mode */
+	uint32_t smi_cmd;	/* system port address of SMI command port */
+	uint8_t acpi_enable;	/* value to write to SMI_CMD */
+	uint8_t acpi_disable;	/* value to write to SMI_CMD */
+
+	/* more... */
+};
+
+
 
 extern int acpi_init(void);
 

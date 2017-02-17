@@ -28,7 +28,7 @@ SOFTWARE.
 #ifndef __LAPIC__
 #define __LAPIC__
 
-#define LAPIC_BASE 		0xFEE00000		/* Physical Address of MMIO. 4kb */
+#define LAPIC_BASE 		(uint32_t) 0xFEE00000		/* Physical Address of MMIO. 4kb */
 /* LAPIC Memory Mapped Registers */
 #define LAPIC_ID		0x020
 #define LAPIC_VER		0x030

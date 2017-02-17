@@ -101,6 +101,9 @@ void main(void)
 	printf("[init] early kernel boot success!\n");
 	printf("[init] %d processors detected\n", acpi_init());
 
+	pic_disable();
+	lapic_init();
+
 	sti();
 	for(;;);
 }

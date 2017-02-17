@@ -129,9 +129,9 @@ void trap(struct registers* r)
 
 		halt_catch_fire();
 	} else {
-		// char buf[100];
-		// snprintf(buf, 100, "Unknown interrupt: %d\n", r->int_no);
-		// vga_puts(buf);
+		char buf[100];
+		snprintf(buf, 100, "Unknown interrupt: %d\n", r->int_no);
+		vga_puts(buf);
 	}
 	/* send EOI to slave PIC */
 	if (r->int_no > 40)

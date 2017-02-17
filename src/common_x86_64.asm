@@ -36,8 +36,12 @@ global idt_flush
 global gdt_flush
 global writemsr 
 global readmsr 
-global outb 
+global outb
+global outw 
+global outd
 global inb 
+global inw
+global ind
 global halt_catch_fire
 global x2apic_enabled
 
@@ -63,6 +67,18 @@ outb:
 	out dx, al 
 	ret 
 
+outw:
+	mov rdx, rdi
+	mov rax, rsi
+	out dx, ax
+	ret
+
+outd:
+	mov rdx, rdi
+	mov rax, rsi
+	out dx, eax
+	ret
+	
 ;;; uint16_t inb(rdi = port)
 inb:
 	mov rdx, rdi 
@@ -70,6 +86,17 @@ inb:
 	in al, dx 
 	ret
 
+inw:
+	mov rdx, rdi 
+	xor rax, rax 
+	in ax, dx 
+	ret
+
+ind:
+	mov rdx, rdi 
+	xor rax, rax 
+	in eax, dx 
+	ret
 
 ;;; writemsr(rdi = MSR register, rsi = contents)
 writemsr:
