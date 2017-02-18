@@ -137,15 +137,6 @@ void elf_objdump(void* data) {
 	
 }
 
-
-/*void memcpy(void *s1,  void *s2, size_t n) {
-	uint8_t* src = (uint8_t*) s2;
-	uint8_t* dest = (uint8_t*) s1;
-	int i;
-	for (i = 0; i < n; i++)
-		dest[i] = src[i];
-}*/
-
 void elf_load(void* data) {
 	Elf64_Ehdr * ehdr = (Elf64_Ehdr*) data; 
 

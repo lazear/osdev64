@@ -3,7 +3,7 @@ CC	= gcc
 LD	= ld
 AS	= nasm
 
-CCFLAGS	= -O3 -ffreestanding -nostdlib -Wall -mno-sse -mno-red-zone -mcmodel=kernel -I $(INCLUDE) -m64 -c
+CFLAGS	= -O2 -ffreestanding -nostdlib -Wall -fno-strict-aliasing -mno-sse -mno-red-zone -mcmodel=kernel -I $(INCLUDE) -m64 -c
 LDFLAGS	= -Map map.txt -T linker.ld -z max-page-size=0x1000
 ASFLAGS = -f elf64
 
@@ -27,7 +27,7 @@ default: all
 
 %.o: %.c $(HEADERS)
 	@echo "\033[1;32mcc $<\033[0m"
-	@$(CC) $(CCFLAGS) $< -o $@
+	@$(CC) $(CFLAGS) $< -o $@
 
 %.o: %.asm
 	@echo "\033[1;32mas $<\033[0m"

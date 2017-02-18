@@ -136,6 +136,10 @@ void trap(struct registers* r)
 	/* send EOI to slave PIC */
 	if (r->int_no > 40)
 		outb(0xA0, 0x20);
+
+	if (lapic_active())
+		lapic_eoi();
+	
 	outb(0x20, 0x20);
 }
 

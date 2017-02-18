@@ -100,6 +100,7 @@ next_format:
 						format++;
 						goto next_format;
 					}
+					case 'X':
 					case 'x': {
 						ulltostr(va_arg(ap, size_t), buf, 16, 16);
 						if ((flags & PREFIX) && (n+2 < size)) {

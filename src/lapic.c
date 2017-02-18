@@ -51,15 +51,15 @@ static struct lock lock;
 static int lapic_up = 0;
 
 
-static void lapic_write(uint32_t index, uint32_t value) 
+static uint32_t lapic_write(uint32_t index, uint32_t value) 
 {
-	*(uint32_t*) (LAPIC_BASE + index) = value;	/* Write to lapic register */
-//	return *(uint32_t*) (LAPIC_BASE + LAPIC_ID);			/* Wait by reading */
+	*(uint32_t*) ((size_t)LAPIC_BASE + index) = value;
+	return 	*(uint32_t*) ((size_t)LAPIC_BASE + index);	
 }
 
 static uint32_t lapic_read(uint32_t index) 
 {
-	return *(uint32_t*) (LAPIC_BASE + index);
+	return 	*(uint32_t*) ((size_t)LAPIC_BASE + index);
 }
 
 int lapic_active()
@@ -82,6 +82,7 @@ void lapic_test(uint16_t dest, uint16_t sh, uint16_t vector)
 
 void lapic_timer_config(uint8_t mode, uint32_t initial_count, uint8_t divide_by) 
 {
+
 	/* LVT Timer register:
 		19:17 Timer mode
 		16:15 Mask
@@ -100,7 +101,7 @@ void lapic_timer_config(uint8_t mode, uint32_t initial_count, uint8_t divide_by)
 	lapic_write(DIVIDE_CONF, divide_by);
 	lapic_write(INIT_COUNT, initial_count);
 	lapic_write(CURR_COUNT, 0);
-	kernel_log("[lapic] cpu %d timer mode set to %d, initial count: %#x, divide_by: %X\n", lapic_read(LAPIC_ID)>>24, mode, initial_count, divide_by);
+	kernel_log("[lapic] cpu %x timer mode set to %d, initial count: %#x, divide_by: %x\n", lapic_read(LAPIC_ID)>>24, mode, initial_count, divide_by);
 }
 
 int lapic_danger_id() 
@@ -119,8 +120,8 @@ void lapic_init()
 	mmu_map_page(&lapic_base, LAPIC_BASE, PRESENT | RW);
 
 	/* Enable local APIC and set the spurious interrupt vector */
-//	lapic_write(LAPIC_SIV, 0x100 | (IRQ_ZERO + IRQ_SPURIOUS));
-
+	lapic_write(LAPIC_SIV, 0x100 | (IRQ_ZERO + IRQ_SPURIOUS));
+	lapic_write(TIMER, 0x100000);
 
 	uint64_t apic_base = readmsr(IA32_APIC_BASE);
 
@@ -134,18 +135,13 @@ void lapic_init()
 	
 	}
 
-
-
-
-
 	/* Setup timer on the first CPU only to avoid race for timer()*/
 
-
-
 	/* Mask local interrupts */
-	//lapic_write(LAPIC_LINT0, 0x10000);
-	//lapic_write(LAPIC_LINT1, 0x10000);
+	lapic_write(LAPIC_LINT0, 0x10000);
+	lapic_write(LAPIC_LINT1, 0x10000);
 
+	/* Disable performance counter overflow interrupts */
 	if (((lapic_read(LAPIC_VER) >> 16) & 0xFF) >= 4)
 		lapic_write(0x0340, 0x10000);
 
@@ -162,6 +158,8 @@ void lapic_init()
 
 	lapic_write(LAPIC_TPR, 0);
 	lapic_up = 1;
+	__sync_synchronize();
+	kernel_log("[lapic] begin timer config\n");
 	lapic_timer_config(PERIODIC, 0x10000, 0x0A);
 	kernel_log("[lapic] configuration complete\n");
 }

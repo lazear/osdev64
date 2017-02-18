@@ -103,7 +103,7 @@ void main(void)
 
 	pic_disable();
 	lapic_init();
-
-	sti();
+	printf("Everything is good to go!\n");
+//	sti();
 	for(;;);
 }
