@@ -168,51 +168,49 @@ int udelay(int i) {
 	return lapic_read(LAPIC_ID);
 }
 
-// /* Sends a start up IPI to the AP processor designated <apic_id>,
-// telling it to start executing code at <address> 
-// Address must be page-aligned, and in the first megabyte of system mem*/
-// void lapic_start_AP(int apic_id, uint32_t address) {
+/* Sends a start up IPI to the AP processor designated <apic_id>,
+telling it to start executing code at <address> 
+Address must be page-aligned, and in the first megabyte of system mem*/
+void lapic_start_AP(int apic_id, uint32_t address) {
 
-// 	/* Following Intel SMP startup procedure:
-// 	Write 0Ah to CMOS RAM location 0Fh (shutdown code). 
-// 	This initializes a warm reset
-// 	*/
-// 	outb(0x70, 0xF);
-// 	outb(0x71, 0xA);
+	/* Following Intel SMP startup procedure:
+	Write 0Ah to CMOS RAM location 0Fh (shutdown code). 
+	This initializes a warm reset
+	*/
+	outb(0x70, 0xF);
+	outb(0x71, 0xA);
 
-// 	/*
-// 	The STARTUP IPI causes the target processor to start executing in Real Mode from address
-// 	000VV000h, where VV is an 8-bit vector that is part of the IPI message. Startup vectors are
-// 	limited to a 4-kilobyte page boundary in the first megabyte of the address space. Vectors A0-BF
-// 	are reserved; do not use vectors in this range. 
-// 	*/
-// 	uint16_t* warm_reset_vector = (uint16_t*) P2V(0x40 << 4 | 0x67);
-// 	warm_reset_vector[0] = 0;
-// 	warm_reset_vector[1] = address >> 4;
-// 	//*warm_reset_vector = address;
+	/*
+	The STARTUP IPI causes the target processor to start executing in Real Mode from address
+	000VV000h, where VV is an 8-bit vector that is part of the IPI message. Startup vectors are
+	limited to a 4-kilobyte page boundary in the first megabyte of the address space. Vectors A0-BF
+	are reserved; do not use vectors in this range. 
+	*/
+	uint16_t* warm_reset_vector = (uint16_t*) P2V(0x40 << 4 | 0x67);
+	warm_reset_vector[0] = 0;
+	warm_reset_vector[1] = address >> 4;
+	//*warm_reset_vector = address;
 
-// 	lapic_write(LAPIC_ICRHI, apic_id << 24);
-// 	lapic_write(LAPIC_ICRLO, INIT | LEVEL | ASSERT);
-// 	udelay(2);
-// 	lapic_write(LAPIC_ICRLO, INIT | LEVEL);
-// 	udelay(1);
+	lapic_write(LAPIC_ICRHI, apic_id << 24);
+	lapic_write(LAPIC_ICRLO, INIT | LEVEL | ASSERT);
+	udelay(2);
+	lapic_write(LAPIC_ICRLO, INIT | LEVEL);
+	udelay(1);
 
-// 	/* Keep this printf here, it acts as a delay... lol */
-// 	kernel_log("[lapic] starting cpu: %d\n", apic_id);
-// 	for (int i = 0; i < 2; i++) {
-// 		lapic_write(LAPIC_ICRHI, apic_id << 24);
-// 		lapic_write(LAPIC_ICRLO, STARTUP |  address >> 12);
-// 		udelay(1);
-// 	}
+	/* Keep this printf here, it acts as a delay... lol */
+	kernel_log("[lapic] starting cpu: %d\n", apic_id);
+	for (int i = 0; i < 2; i++) {
+		lapic_write(LAPIC_ICRHI, apic_id << 24);
+		lapic_write(LAPIC_ICRLO, STARTUP |  address >> 12);
+		udelay(1);
+	}
 
-// }
-
-
-
+}
 
 // void mp_enter() {
 // 	lock_acquire(&lock);
 // 	/* What's our APIC id? */
+// 	__sync_synchronize();
 // 	int id = lapic_read(LAPIC_ID) >> 24;
 
 // 	ncpu++;
@@ -230,7 +228,7 @@ int udelay(int i) {
 // 	cpu->id = id;
 // 	/* Initialize the processors's LAPIC */
 // 	lapic_init();
-
+// 	__sync_synchronize();
 // 	/* Release spinlock, allowing next processor in */
 // 	lock_release(&lock);
 // }

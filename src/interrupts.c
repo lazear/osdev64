@@ -25,6 +25,7 @@ SOFTWARE.
 #include <arch/x86_64/desc.h>
 #include <arch/x86_64/kernel.h>
 #include <arch/x86_64/mmu.h>
+#include <lapic.h>
 #include <stack_trace.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -139,7 +140,7 @@ void trap(struct registers* r)
 
 	if (lapic_active())
 		lapic_eoi();
-	
+
 	outb(0x20, 0x20);
 }
 
