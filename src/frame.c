@@ -72,7 +72,7 @@ void page_init(size_t memory, size_t table)
 	 * almost certainly happen on real machines, since the cutoff mark is 
 	 * ~128 MB of physical memory */
 	size_t mmu[3] = {0,0,0};
-	assert((table + 3*PAGE_SIZE) < INITIAL_TOP);
+	assert((table + 3 * PAGE_SIZE) < INITIAL_TOP);
 	if ((r*PAGE_SIZE + table) > V2P(INITIAL_TOP)) {
 		int req = ROUND_UP((r*PAGE_SIZE + table), 0x200000);
 		mmu[0] = table;
@@ -82,7 +82,8 @@ void page_init(size_t memory, size_t table)
 		mmu_bootstrap(req, (void*)mmu[0], (void*)mmu[1], (void*)mmu[2]);
 
 	}
-
+	kernel_log("[phys] set kernel heap start to %#x\n",
+		P2V(r * PAGE_SIZE + table));
 	parray = (void*) P2V(table);
 	/* Initialize all pages in system 
 	 * Don't add to free list yet... wait until we are told to do so explicitly */

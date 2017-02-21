@@ -24,9 +24,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #include <stddef.h>
 #include <arch/x86_64/kernel.h>
 #include <arch/x86_64/interrupts.h>
-#include <frame.h>
 #include <arch/x86_64/mmu.h>
 #include <arch/x86_64/desc.h>
+#include <sysconfig.h>
+#include <frame.h>
 #include <stdio.h>
 #include <vga.h>
 #include <sse.h>
@@ -82,7 +83,9 @@ void pmm_init(size_t mem_map_location, int mem_map_length)
 
 void main(void)
 {
-	if (!sse42_enabled()) {
+	int sse = sse42_enabled();
+	config_set(CONFIG_SSE, sse);
+	if (! sse) {
 		/* SSE4.2 is not heavily used by the kernel... yet.
 		 * So we will not worry too much */
 		kernel_log("[init] No SSE4.2 support!\n");
