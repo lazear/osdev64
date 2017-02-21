@@ -53,13 +53,13 @@ static int lapic_up = 0;
 
 static uint32_t lapic_write(uint32_t index, uint32_t value) 
 {
-	*(uint32_t*) ((void*)LAPIC_BASE + index) = value;
-	return 	*(uint32_t*) ((void*)LAPIC_BASE + index);	
+	*(uint32_t*) ((char*) LAPIC_BASE + index) = value;
+	return 	*(uint32_t*) ((char*) LAPIC_BASE + index);	
 }
 
 static uint32_t lapic_read(uint32_t index) 
 {
-	return 	*(uint32_t*) ((void*)LAPIC_BASE + index);
+	return 	*(uint32_t*) ((char*) LAPIC_BASE + index);
 }
 
 int lapic_active()
@@ -168,7 +168,7 @@ void lapic_init()
 	kernel_log("[lapic] configuration complete\n");
 }
 
-int udelay(int i) {
+int udelay(void) {
 	return lapic_read(LAPIC_ID);
 }
 
@@ -197,16 +197,16 @@ void lapic_start_AP(int apic_id, uint32_t address) {
 
 	lapic_write(LAPIC_ICRHI, apic_id << 24);
 	lapic_write(LAPIC_ICRLO, INIT | LEVEL | ASSERT);
-	udelay(2);
+	udelay();
 	lapic_write(LAPIC_ICRLO, INIT | LEVEL);
-	udelay(1);
+	udelay();
 
 	/* Keep this printf here, it acts as a delay... lol */
 	kernel_log("[lapic] starting cpu: %d\n", apic_id);
 	for (int i = 0; i < 2; i++) {
 		lapic_write(LAPIC_ICRHI, apic_id << 24);
 		lapic_write(LAPIC_ICRLO, STARTUP |  address >> 12);
-		udelay(1);
+		udelay();
 	}
 
 }

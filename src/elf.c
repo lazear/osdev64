@@ -137,24 +137,25 @@ void elf_objdump(void* data) {
 	
 }
 
-void elf_load(void* data) {
+void elf_load(char* data) {
+	size_t i;
 	Elf64_Ehdr * ehdr = (Elf64_Ehdr*) data; 
 
-	Elf64_Phdr* phdr 		= (void*) ((size_t) data + ehdr->e_phoff);
-	Elf64_Phdr* last_phdr 	= (void*) ((size_t) phdr + (ehdr->e_phentsize * ehdr->e_phnum));
+	Elf64_Phdr* phdr 		= (void*) (data + ehdr->e_phoff);
+	Elf64_Phdr* last_phdr 	= (void*) (phdr + (ehdr->e_phentsize * ehdr->e_phnum));
 	while(phdr < last_phdr) {
 				if (phdr->p_type != 1) {
 			phdr++;
 			continue;
 		}
 	
-		for (int i = 0; i <= phdr->p_memsz; i += 0x1000) {
+		for (i = 0; i <= phdr->p_memsz; i += 0x1000) {
 			struct page* p = mmu_req_page(phdr->p_vaddr + i, PRESENT|RW|USER);
 			if ((size_t) p->data != ROUND_DOWN((phdr->p_vaddr + i), PAGE_SIZE))
 				break;
 		}
 		memset((void*) phdr->p_vaddr, 0, phdr->p_memsz);
-		memcpy((void*) phdr->p_vaddr, (void*) (data + phdr->p_offset), phdr->p_filesz);
+		memcpy((void*) phdr->p_vaddr, (char*) (data + phdr->p_offset), phdr->p_filesz);
 		phdr++;
 	}
 	last_phdr--;

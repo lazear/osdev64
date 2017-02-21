@@ -75,6 +75,7 @@ int vsnprintf(char *str, size_t size, const char *format, va_list ap)
 	memset(buf, 0, size);
 	size_t n = 0;
 	size_t pad = 0;
+	size_t i;
 	int flags = 0;
 
 	while(*format && n < size) {
@@ -110,14 +111,14 @@ next_format:
 						break;
 					}
 					case 'd':{
-						size_t d = va_arg(ap, size_t);
+						intptr_t d = va_arg(ap, intptr_t);
 						if ((flags & ALWAYS_SIGN) && (n+1 < size)) 
 							str[n++] = (d > 0) ? '+' : '-';
 						ulltostr(d, buf, 10, 20);				
 						break;
 					}
 				 	case 'i': {
-						size_t d = va_arg(ap, size_t);
+						intptr_t d = va_arg(ap, intptr_t);
 						if ((n+1 < size)) 
 							if (d < 0) str[n++] = '-';
 						ulltostr(d, buf, 10, 20);
@@ -171,10 +172,10 @@ next_format:
 
 				}
 				if ((flags & PAD) && (pad > strlen(buf))) {
-					for (int i = 0; (i < (pad - strlen(buf))) && ((i+n) < size); i++)
+					for (i = 0; (i < (pad - strlen(buf))) && ((i+n) < size); i++)
 						str[n++] = (flags & NOTNUM) ? ' ' : '0';
 				}
-				for (int i = 0; (i < strlen(buf)) && ((i+n) < size); i++) 	
+				for (i = 0; (i < strlen(buf)) && ((i+n) < size); i++) 	
 					str[n++] = buf[i];		
 				memset(buf, 0, strlen(buf));
 				break;

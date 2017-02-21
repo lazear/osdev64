@@ -84,6 +84,7 @@ int acpi_init()
 {
 	/* Read through the extended bios data area (EBDA) and look at every 16-byte aligned
 	 * structure for the signature */
+	size_t i;
     uint8_t *ptr = (uint8_t *) P2V(0x000E0000);
     int cpu_count = 0;
 
@@ -114,7 +115,7 @@ int acpi_init()
 
 
 	r = (struct rsdt_header*) P2V(r);
-	for (int i = 0; i < (r->h.length - sizeof(struct acpi_header)) /4; i++) {
+	for (i = 0; i < (r->h.length - sizeof(struct acpi_header)) /4; i++) {
 		struct acpi_header* entry = (struct acpi_header*) P2V(r->tableptrs[i]);
 		temp.address = ROUND_DOWN(r->tableptrs[i], PAGE_SIZE);
 		mmu_map_page(&temp, ROUND_DOWN(P2V(r->tableptrs[i]), PAGE_SIZE), PRESENT|RW);

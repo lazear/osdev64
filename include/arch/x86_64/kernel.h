@@ -7,7 +7,7 @@
 extern void memset(void*, int c, size_t n);
 extern void memsetw(void*, int c, size_t n);
 extern void memcpy(void*, const void*, size_t n);
-extern int strlen(char* s);
+extern size_t strlen(char* s);
 extern char* strncpy(char* dest, const char* src, size_t n);
 extern char* strcpy(char* dest, const char* src);
 extern uint8_t inb(uint16_t port);

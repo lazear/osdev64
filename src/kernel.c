@@ -107,13 +107,6 @@ void main(void)
 	pic_disable();
 	lapic_init();
 
-	int phys = 0;
-	printf("mmu recursive %#x\n", mmu_virt_to_phys(10, &phys));
-	printf("mmu recursive %#x\n", mmu_virt_to_phys(KERNEL_VIRT, &phys));
-	printf("mmu recursive %#x\n", mmu_virt_to_phys(INITIAL_TOP + 0x100, &phys));
-	struct page* p = mmu_req_page(0xc0000000, 7);
-
-	printf("got %#x. recir %x %#x\n", p->address, mmu_virt_to_phys(p->data, &phys), phys);
 	printf("Everything is good to go!\n");
 //	sti();
 	for(;;);

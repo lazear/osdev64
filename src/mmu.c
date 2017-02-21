@@ -88,7 +88,7 @@ void mmu_bootstrap(size_t physical, size_t* pml4, size_t* pdpt, size_t* pd)
 {
 
 	kernel_log("[mmu ] bootstrap %#x, pml4 %#x\n", physical, pml4);	
-	int i;
+	size_t i;
 
 	/* Map in address, and recursively map in PML4 */
 	pml4[PML4E(KERNEL_VIRT)] = ((size_t) pdpt) | (PRESENT | RW);
