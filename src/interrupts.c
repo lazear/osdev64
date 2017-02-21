@@ -84,16 +84,18 @@ void page_fault(struct registers* r)
 	size_t cr2;
 	asm volatile("mov %%cr2, %%rax" : "=a"(cr2));
 
-	printf("Page Fault(%d): cr2 %#x\n", r->err_no, cr2);
+	printf("Page Fault(%2d)   cr2:  %#x\n", r->err_no, cr2);
 	printf("Faulting instruction:  %#x (%s)\n", r->rip, (r->cs == 0x23) ? "User process" : "Kernel code");
-	printf("Current stack pointer: %#x\n", r->rsp);
-
+	printf("Current stack pointer: %#x/%#x\n", r->rsp, r->rbp);
+	
 
 	if (r->err_no & PRESENT)	printf(" \tPage Not Present\n");
 	if (r->err_no & RW) 		printf(" \tPage Not Writeable\n");
 	if (r->err_no & USER) 		printf(" \tPage Supervisor Mode\n");
 
-	if (r->cs == 0x23)
+	//if (r->cs == 0x23)
+	printf("Beginning stack trace:\n");
+	stack_trace(r->rbp);
 
 	asm volatile("mov %%rax, %%cr2" :: "a"(0x00000000));
 	halt_catch_fire();

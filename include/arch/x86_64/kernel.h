@@ -22,6 +22,9 @@ int strncmp(const char *s1, const char *s2, size_t n);
 
 extern void halt_catch_fire(void);
 
+//extern size_t KERNEL_VIRT;
+//extern size_t KERNEL_PHYS;
+
 #define KERNEL_VIRT		0xFFFFFFFF80000000
 #define INITIAL_TOP		0xFFFFFFFF80400000
 

@@ -18,7 +18,8 @@
 #define PDE(x) 		(((size_t) (x) >> 21) & 0x1FF)
 #define PTE(x) 		(((size_t) (x) >> 12) & 0x1FF)
 
-#define RECURSIVE_ENTRY 	510
+/* Recursive page mapping */
+#define MMU_RE 	0x180
 
 extern void mmu_init(void);
 extern void mmu_bootstrap(size_t physical, size_t* pml4, size_t* pdpt, size_t* pd);
@@ -28,6 +29,6 @@ extern struct page* mmu_req_page(size_t address, int flags);
 
 void mmu_map_page(struct page* frame, size_t virtual, int flags);
 size_t get_cr3(void);
-size_t mmu_virt_to_phys(size_t virt);
+size_t mmu_virt_to_phys(size_t virt, int *err);
 
 #endif

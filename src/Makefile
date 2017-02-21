@@ -3,7 +3,7 @@ CC	= gcc
 LD	= ld
 AS	= nasm
 
-CFLAGS	= -O2 -ffreestanding -nostdlib -Wall -fno-strict-aliasing -mno-sse -mno-red-zone -mcmodel=kernel -I $(INCLUDE) -m64 -c
+CFLAGS	= -O2 -ffreestanding -fno-omit-frame-pointer -nostdlib -Wall -fno-strict-aliasing -mno-sse -mno-red-zone -mcmodel=kernel -I $(INCLUDE) -m64 -c
 LDFLAGS	= -Map map.txt -T linker.ld -z max-page-size=0x1000
 ASFLAGS = -f elf64
 
