@@ -70,10 +70,13 @@ void page_init(size_t memory, size_t table)
 	/* Handle cases where total number of physical pages will not fit inside
 	 * of the previously mapped virtual area (0-4MB)... I.e. this will
 	 * almost certainly happen on real machines, since the cutoff mark is 
-	 * ~128 MB of physical memory */
+	 * ~128 MB of physical memory 
+	 * 
+	 * Pages are mapped to virtual memory directly after KERNEL_END */
 	size_t mmu[3] = {0,0,0};
 	assert((table + 3 * PAGE_SIZE) < INITIAL_TOP);
-	if ((r*PAGE_SIZE + table) > V2P(INITIAL_TOP)) {
+	if ((r * PAGE_SIZE + table) > V2P(INITIAL_TOP)) {
+		/* Calculate how many 2MB pages are needed and map them in */
 		int req = ROUND_UP((r*PAGE_SIZE + table), 0x200000);
 		mmu[0] = table;
 		mmu[1] = table + (PAGE_SIZE*1);

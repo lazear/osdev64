@@ -5,7 +5,7 @@ export INCLUDE = $(shell pwd)/include/
 export DISK = $(shell pwd)/disk
 export EXE = $(shell pwd)/a.out
 
-RAM = 128
+RAM = 1024
 CPUS = 4
 
 all:

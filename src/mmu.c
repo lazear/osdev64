@@ -62,7 +62,9 @@ void mmu_init(void)
 
 	PML4 = page_request(cr3);
 	assert(PML4);
-	PML4->data = (void*) __to_address(RECURSIVE_ENTRY, RECURSIVE_ENTRY, RECURSIVE_ENTRY, RECURSIVE_ENTRY);
+	PML4->data = (void*) __to_address(RECURSIVE_ENTRY, RECURSIVE_ENTRY, 
+		RECURSIVE_ENTRY, RECURSIVE_ENTRY);
+//	PML4->data = get_cr3();
 	PML4->flags = P_USED | P_IMMUTABLE | P_KERNEL | P_VIRT;
 	list_del(&PML4->pages);
 	list_del(&PML4->lru);
@@ -111,9 +113,10 @@ void mmu_bootstrap(size_t physical, size_t* pml4, size_t* pdpt, size_t* pd)
 	int i;
 
 	/* Map in address, and recursively map in PML4 */
-	pml4[PML4E(KERNEL_VIRT)] 	= ((size_t) pdpt) | (PRESENT | RW);
-	pml4[RECURSIVE_ENTRY] = ((size_t) pml4) | (PRESENT | RW);
-	pdpt[PDPTE(physical)] = ((size_t) pd) | (PRESENT | RW);
+	pml4[PML4E(KERNEL_VIRT)] = ((size_t) pdpt) | (PRESENT | RW);
+	pml4[RECURSIVE_ENTRY]    = ((size_t) pml4) | (PRESENT | RW);
+	pdpt[PDPTE(physical)] 	 = ((size_t) pd) | (PRESENT | RW);
+	pdpt[PDPTE(KERNEL_VIRT)] = ((size_t) pd)| (PRESENT | RW);
 	for (i = 0; i < physical; i += 0x00200000) {
 		pd[PDE(i)] = i | (PRESENT | RW | PS);
 	}
@@ -164,7 +167,8 @@ void mmu_map_page(struct page* frame, size_t address, int flags)
 
 	assert(frame);
 	assert(pml4);
-	kernel_log("[mmu ] mapping requested: phys %#x -> virt %#x (%x)\n", frame->address, address, flags);
+	kernel_log("[mmu ] mapping requested: phys %#x -> virt %#x (%x)\n", 
+		frame->address, address, flags);
 
 	if (pml4[PML4E(address)] & PRESENT) {
 		pdpt = (size_t*) P2V(ROUND_DOWN(pml4[PML4E(address)], PAGE_SIZE));
@@ -209,6 +213,11 @@ void mmu_map_page(struct page* frame, size_t address, int flags)
 	frame->data = (void*) address;
 }
 
+/**
+ * @brief Request mapping of a virtual address to an anonymous physical page.
+ * The first free physical page will be allocated. page->data will be a pointer
+ * to the virtual address mapped.
+ */
 struct page* mmu_req_page(size_t address, int flags)
 {
 	struct page* page = page_alloc();
