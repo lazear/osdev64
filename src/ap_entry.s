@@ -17,6 +17,9 @@ start:
 	mov fs, ax
 	mov gs, ax
 
+	mov ax, 0xdead
+	jmp $
+
 	lgdt [gdt_desc] 	; Load the Global Descriptor Table
 
 	mov eax, cr0

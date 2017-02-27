@@ -4,6 +4,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
+
+#define KERNEL_CS 0x08
+
 extern void memset(void*, int c, size_t n);
 extern void memsetw(void*, int c, size_t n);
 extern void memcpy(void*, const void*, size_t n);

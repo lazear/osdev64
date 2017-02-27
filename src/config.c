@@ -22,6 +22,7 @@ SOFTWARE.
 */
 
 #include <stddef.h>
+#include <stdio.h>
 #include <sysconfig.h>
 
 static size_t sysconfig[CONFIG_MAX];
@@ -30,6 +31,7 @@ int config_set(int config, size_t value)
 {
 	if (config > CONFIG_MAX || config < 0)
 		return -1;
+	kernel_log("[config] config %d := %#x\n");
 	sysconfig[config] = value;
 	return 0;
 }

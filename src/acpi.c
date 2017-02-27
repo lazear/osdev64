@@ -30,6 +30,7 @@ SOFTWARE.
 #include <assert.h>
 #include <acpi.h>
 #include <frame.h>
+#include <sysconfig.h>
 
 static int acpi_checksum(char* ptr)
 {
@@ -129,6 +130,7 @@ int acpi_init()
 			cpu_count = acpi_parse_madt((struct madt_header*) entry);			//return acpi_parse_madt((struct madt_header*) entry);
 		}
 	}
-	return cpu_count;
 
+	config_set(CONFIG_CPU_COUNT, cpu_count);
+	return cpu_count;
 }

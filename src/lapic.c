@@ -175,7 +175,8 @@ int udelay(void) {
 /* Sends a start up IPI to the AP processor designated <apic_id>,
 telling it to start executing code at <address> 
 Address must be page-aligned, and in the first megabyte of system mem*/
-void lapic_start_AP(int apic_id, uint32_t address) {
+void lapic_start_AP(int apic_id, uint32_t address)
+{
 
 	/* Following Intel SMP startup procedure:
 	Write 0Ah to CMOS RAM location 0Fh (shutdown code). 
@@ -198,11 +199,12 @@ void lapic_start_AP(int apic_id, uint32_t address) {
 	lapic_write(LAPIC_ICRHI, apic_id << 24);
 	lapic_write(LAPIC_ICRLO, INIT | LEVEL | ASSERT);
 	udelay();
+	udelay();
 	lapic_write(LAPIC_ICRLO, INIT | LEVEL);
 	udelay();
 
 	/* Keep this printf here, it acts as a delay... lol */
-	kernel_log("[lapic] starting cpu: %d\n", apic_id);
+	kernel_log("[lapic] starting cpu: %d, WRV %#x\n", apic_id, address);
 	for (int i = 0; i < 2; i++) {
 		lapic_write(LAPIC_ICRHI, apic_id << 24);
 		lapic_write(LAPIC_ICRLO, STARTUP |  address >> 12);

@@ -24,8 +24,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #include <stddef.h>
 #include <arch/x86_64/kernel.h>
 #include <arch/x86_64/interrupts.h>
+#include <arch/x86_64/timer.h>
 #include <arch/x86_64/mmu.h>
 #include <arch/x86_64/desc.h>
+#include <drivers/rtc.h>
 #include <sysconfig.h>
 #include <frame.h>
 #include <stdio.h>
@@ -95,7 +97,16 @@ void main(void)
 	idt_init();			
 	pic_init();
 	trap_init();
+	pit_init(100);
 	syscall_init();
+
+	struct time boot_time;
+	size_t epoch = rtc_time(&boot_time);
+	config_set(CONFIG_BOOTTIME, epoch);
+
+	printf("%4d/%2d/%2d %2d:%2d:%2d\n", 
+		boot_time.year, boot_time.month, boot_time.day,
+		boot_time.hour, boot_time.minute, boot_time.second);
 
 	uint8_t memlen = *(uint8_t*) P2V(0x6FF0) / sizeof(struct memory_map);
 	pmm_init(P2V(0x7000), memlen);
@@ -108,6 +119,22 @@ void main(void)
 	lapic_init();
 
 	printf("Everything is good to go!\n");
-//	sti();
+
+
+	extern size_t _binary_ap_entry_start[];
+	extern size_t _binary_ap_entry_end[];
+
+	struct page ap_entry;
+	ap_entry.address = 0x8000;
+	mmu_map_page(&ap_entry, ap_entry.address, PRESENT|RW);
+	ptrdiff_t size = (intptr_t)&_binary_ap_entry_end - (intptr_t) &_binary_ap_entry_start;
+	memcpy((void*) ap_entry.address, (void*) _binary_ap_entry_start, size);
+
+	//lapic_start_AP(1, ap_entry.address);
+
+	interrupts_enable();
+
+
+
 	for(;;);
 }

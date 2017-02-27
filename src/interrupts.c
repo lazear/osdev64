@@ -61,10 +61,11 @@ static char* exceptions[] = {
 	[0x1E] = "Security fault",
 };
 
-void breakpoint_handler(struct registers* r)
+static void dump_registers(struct registers* r)
 {
-	printf("Breakpoint RIP %#x RFLAGS %x\n", r->rip, r->flags);
-	printf("cs  %#x ss  %#x\n", r->cs, r->ss);
+	printf("Core dump\n");
+	printf("rip %#x rflags %x\n", r->rip, r->flags);
+	printf("cs  %x ss  %x\n", r->cs, r->ss);
 	printf("rax %#x rbx %#x\n", r->rax, r->rbx);
 	printf("rcx %#x rdx %#x\n", r->rcx, r->rdx);
 	printf("rsi %#x rdi %#x\n", r->rsi, r->rdi);
@@ -73,14 +74,18 @@ void breakpoint_handler(struct registers* r)
 	printf("r10 %#x r11 %#x\n", r->r10, r->r11);
 	printf("r12 %#x r13 %#x\n", r->r12, r->r13);
 	printf("r14 %#x r15 %#x\n", r->r14, r->r15);
-
-	if (r->rax == 0)
-		halt_catch_fire();
 }
 
-void page_fault(struct registers* r) 
+int breakpoint_handler(struct registers* r)
 {
-	cli();
+	dump_registers(r);
+	if (r->rax == 0)
+		halt_catch_fire();
+	return 0;
+}
+
+int page_fault(struct registers* r) 
+{
 	size_t cr2;
 	asm volatile("mov %%cr2, %%rax" : "=a"(cr2));
 
@@ -99,42 +104,42 @@ void page_fault(struct registers* r)
 
 	asm volatile("mov %%rax, %%cr2" :: "a"(0x00000000));
 	halt_catch_fire();
+	return 0;
 }
 
 
-void trap_register(int num, void (*handler)(struct registers*))
+void trap_register(int num, int (*handler)(struct registers*))
 {	
 	if (num < 256)
 		handlers[num] = handler;
+	else {
+		printf("panic: Trying to install a handler for interrupt %d\n", num);
+		halt_catch_fire();
+	}
 }
 
 
 void trap(struct registers* r)
 {
 	if (handlers[r->int_no]) {
-		handlers[r->int_no](r);
+		int err = handlers[r->int_no](r);
+		if (err) {
+			printf("Trap handler 0x%x returned value %#x\n", r->int_no, err);
+			dump_registers(r);
+			halt_catch_fire();
+		}
 	} else if (r->int_no < IRQ_ZERO) {
 		/* CPU exception without a handler installed */
-		
-		printf("CPU exception: %s\n", exceptions[r->int_no]);
-		printf("rip %#x rflags %x\n", r->rip, r->flags);
-		printf("cs  %x ss  %x\n", r->cs, r->ss);
-		printf("rax %#x rbx %#x\n", r->rax, r->rbx);
-		printf("rcx %#x rdx %#x\n", r->rcx, r->rdx);
-		printf("rsi %#x rdi %#x\n", r->rsi, r->rdi);
-		printf("rsp %#x rbp %#x\n", r->rsp, r->rbp);
-		printf("r8  %#x r9  %#x\n", r->r8, r->r9);
-		printf("r10 %#x r11 %#x\n", r->r10, r->r11);
-		printf("r12 %#x r13 %#x\n", r->r12, r->r13);
-		printf("r14 %#x r15 %#x\n", r->r14, r->r15);
-
+		printf("CPU exception %s\n", exceptions[r->int_no]);
+		dump_registers(r);		
 		stack_trace(r->rbp);
-
 		halt_catch_fire();
 	} else {
-		char buf[100];
-		snprintf(buf, 100, "Unknown interrupt: %d\n", r->int_no);
-		vga_puts(buf);
+		/* Non-exception without handler installed */
+		printf("Interrupt 0x%x without handler\n", r->int_no);
+		dump_registers(r);
+		stack_trace(r->rbp);
+		halt_catch_fire();
 	}
 	/* send EOI to slave PIC */
 	if (r->int_no > 40)

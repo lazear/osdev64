@@ -17,10 +17,10 @@
 
 extern struct jmp_buf sys_exit_buf;
 
-typedef void (*trap_handler) (struct registers* r);
+typedef int (*trap_handler) (struct registers* r);
 extern void trap_init(void);
 extern void trap(struct registers* r);
-extern void trap_register(int num, void (*handler)(struct registers*));
+extern void trap_register(int num, int (*handler)(struct registers*));
 
 extern void pic_enable(int irq);
 extern void pic_disable(void);
@@ -39,12 +39,12 @@ void lapic_init();
 void lapic_test(uint16_t dest, uint16_t sh, uint16_t vector) ;
 
 
-static inline void cli(void)
+static inline void interrupts_disable(void)
 {
 	asm volatile("cli");
 }
 
-static inline void sti(void)
+static inline void interrupts_enable(void)
 {
 	asm volatile("sti");
 }
